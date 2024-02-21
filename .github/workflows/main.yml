@@ -1,0 +1,51 @@
+name: Workflow for Codecov Action
+on: [pull_request]
+jobs:
+  run:
+    permissions: read-all
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: Install dependencies
+        run: npm install
+      - name: Lint
+        run: npm run lint
+      - name: Upload test results to Codecov (calculator)
+        uses: ./
+        with:
+          files: ./demo/calculator/junit.xml
+          flags: ${{ matrix.os }}
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov (demo)
+        uses: ./
+        with:
+          files: ./demo/coverage-test/junit.xml
+          flags: ${{ matrix.os }}
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: verify comment was made (not windows)
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: |
+          curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/joseph-sentry/test-results-action/issues/${{ github.event.pull_request.number }}/comments | \
+          jq -e '.[] | {user: .user.login, message: .body} | select((.user | contains("codecov[bot]")) and (.message | contains("Test Failures Detected")))'
+      
+      - name: verify comment was made (windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          curl -L `
+          -H "Accept: application/vnd.github+json" `
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" `
+          -H "X-GitHub-Api-Version: 2022-11-28" `
+          https://api.github.com/repos/joseph-sentry/test-results-action/issues/${{ github.event.pull_request.number }}/comments | `
+          jq -e '.[] | {user: .user.login, message: .body} | select((.user | contains("codecov[bot]")) and (.message | contains("Test Failures Detected")))'

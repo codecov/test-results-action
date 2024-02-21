@@ -1,0 +1,93 @@
+name: 'Codecov Test Result Action'
+description: 'GitHub Action that uploads test result reports for your repository to codecov.io'
+author: 'Codecov'
+inputs:
+  token:
+    description: 'Repository Codecov token. Used to authorize report uploads'
+    required: false
+  codecov_yml_path:
+    description: 'Specify the path to the Codecov YML'
+    required: false
+  commit_parent:
+    description: 'Override to specify the parent commit SHA'
+    required: false
+  directory:
+    description: 'Directory to search for test result reports.'
+    required: false
+  disable_search:
+    description: 'Disable search for test result files. This is helpful when specifying what files you want to upload with the --file option.'
+    required: false
+  dry_run:
+    description: "Don't upload files to Codecov"
+    required: false
+  env_vars:
+    description: 'Environment variables to tag the upload with (e.g. PYTHON | OS,PYTHON)'
+    required: false
+  exclude:
+    description: 'Folders to exclude from search'
+    required: false
+  fail_ci_if_error:
+    description: 'Specify whether or not CI build should fail if Codecov runs into an error during upload'
+    required: false
+  file:
+    description: 'Path to test result file to upload'
+    required: false
+  files:
+    description: 'Comma-separated list of files to upload'
+    required: false
+  flags:
+    description: 'Flag upload to group test results (e.g. py3.10 | py3.11 | py3.12)'
+    required: false
+  handle_no_reports_found:
+    description: 'Raise no exceptions when no test result reports found'
+    required: false
+  name:
+    description: 'User defined upload name. Visible in Codecov UI'
+    required: false
+  os:
+    description: 'Override the assumed OS. Options are linux | macos | windows.'
+    required: false
+  override_branch:
+    description: 'Specify the branch name'
+    required: false
+  override_build:
+    description: 'Specify the build number'
+    required: false
+  override_build_url:
+    description: 'The URL of the build where this is running'
+    required: false
+  override_commit:
+    description: 'Specify the commit SHA'
+    required: false
+  override_pr:
+    description: 'Specify the pull request number'
+    required: false
+  report_code:
+    description: 'The code of the report. If unsure, do not include'
+    required: false
+  root_dir:
+    description: 'Used when not in git/hg project to identify project root directory'
+    required: false
+  slug:
+    description: 'Specify the slug manually (Enterprise use)'
+    required: false
+  url:
+    description: 'Specify the base url to upload (Enterprise use)'
+    required: false
+  verbose:
+    description: 'Specify whether the Codecov output should be verbose'
+    required: false
+  version:
+    description: 'Specify which version of the Codecov CLI should be used. Defaults to `latest`'
+    required: false
+  working-directory:
+    description: 'Directory in which to execute codecov.sh'
+    required: false
+
+branding:
+  color: 'red'
+  icon: 'umbrella'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
