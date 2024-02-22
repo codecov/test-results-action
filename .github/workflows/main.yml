@@ -21,14 +21,14 @@ jobs:
           files: ./demo/calculator/junit.xml
           flags: ${{ matrix.os }}
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_ORG_TOKEN }}
       - name: Upload test results to Codecov (demo)
         uses: ./
         with:
           files: ./demo/coverage-test/junit.xml
           flags: ${{ matrix.os }}
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_ORG_TOKEN }}
 
       - name: verify comment was made (not windows)
         if: ${{ matrix.os != 'windows-latest' }}
