@@ -6,7 +6,7 @@ The following is a set of guidelines for contributing to this repository, which 
 
 ## What does this repo do?
 
-This repo is a GitHub Action, meaning it integrates with the GitHub Actions CI/CD pipeline. It's meant to take formatted reports with code coverage stats and upload them to codecov.io. Our Node action uses the Actions toolkit to make system calls that allow us to run Codecov's bash uploader inside of Node. Essentially what we're doing in this action is downloading Codecov's bash uploader script from codecov.io/bash, saving it as a file in the current directory, executing the file via `exec` calls, then removing the script from the current directory.
+This repo is a GitHub Action, meaning it integrates with the GitHub Actions CI/CD pipeline. It's meant to take formatted reports with code coverage stats and upload them to codecov.io. Our Node action uses the Actions toolkit to make system calls that allow us to run Codecov's bash uploader inside of Node. Essentially what we're doing in this action is downloading Codecov's CLI, verifying it, and executing it via `exec` calls, then removing it from the current directory.
 
 ## PRs, Issues, and Support
 
