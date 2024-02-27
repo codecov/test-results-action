@@ -10,3 +10,4 @@ for i in pre-commit; do
     rm -fv $i
     ln -sv ../../hooks/$i
 done
+
