@@ -100,9 +100,9 @@ jobs:
         pip install pytest-cov
         pytest --cov=./ --cov-report=xml --junitxml=./junit.xml
     - name: Upload test results to Codecov
-      uses: codecov/test-results-action@v0
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
       with:
-        fail_ci_if_error: true
         files: ./junit.xml,!./cache
         flags: python3.10
         name: codecov-umbrella-test-results
