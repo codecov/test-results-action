@@ -93,7 +93,7 @@ runs:
   steps:
     - name: do the thing
       run: |
-        echo ${{ toJSON(matrix) }}
+        echo '${{ toJSON(matrix) }}'
       shell: bash
     # - name: Verify CLI
     #   shell: bash
