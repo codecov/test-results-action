@@ -89,5 +89,75 @@ branding:
   icon: 'umbrella'
 
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  using: "composite"
+  steps:
+    - name: do the thing
+      run: |
+        echo ${{ toJSON(matrix) }}
+      shell: bash
+    # - name: Verify CLI
+    #   shell: bash
+    #   env:
+    #     PLATFORM: ${{ inputs.os }}
+    #     VERSION: ${{ inputs.version }}
+    #   run: |
+    #     [[ -n "$VERSION" ]] && version=$VERSION || version='latest'
+
+    #     if [ -n "$PLATFORM" ]; then
+    #         final_platform=$PLATFORM
+    #     elif [ -n "$RUNNER_OS" ]; then
+    #         final_platform=$RUNNER_OS
+    #     else
+    #         final_platform='linux'
+    #     fi
+
+    #     [[ "$final_platform" = 'ubuntu' ]] && final_platform='linux'
+
+    #     curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+
+    #     if [ "$final_platform" = 'windows' ]; then
+    #       curl -Os https://cli.codecov.io/${version}/${final_platform}/codecov.exe
+    #       curl -Os https://cli.codecov.io/${version}/${final_platform}/codecov.exe.SHA256SUM
+    #       curl -Os https://cli.codecov.io/${version}/${final_platform}/codecov.exe.SHA256SUM.sig
+
+    #       gpg --no-default-keyring --keyring trustedkeys.gpg --verify codecov.exe.SHA256SUM.sig codecov.exe.SHA256SUM
+
+    #       certutil -hashfile codecov.exe.SHA256SUM SHA256
+
+    #       chmod +x ./codecov
+    #     else 
+    #       curl -Os https://cli.codecov.io/${version}/${final_platform}/codecov
+    #       curl -Os https://cli.codecov.io/${version}/${final_platform}/codecov.SHA256SUM
+    #       curl -Os https://cli.codecov.io/${version}/${final_platform}/codecov.SHA256SUM.sig
+
+    #       gpg --no-default-keyring --keyring trustedkeys.gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+
+    #       shasum -a 256 -c codecov.SHA256SUM
+
+    #       chmod +x ./codecov
+    #     fi
+    # - name: Create Commit
+    #   run: ./codecov create-commit
+    #   shell: bash
+    # - name: Create report
+    #   run: ./codecov create-report
+    #   shell: bash
+    # - name: If token input is not set, then process locally
+    #   if: ${{ inputs.token == '' }}
+    #   run: |
+    #     name=${{ inputs.name }}
+    #     url=${{ inputs.url }}
+    #     ./codecov \
+    #     ${url+--url "$url"} \
+    #     --report-type test_results \
+    #     --token ${{ inputs.token }} \
+    #     ${name+--name "$name"} \
+    #     --matrix ${{ toJSON(matrix) }}
+    #   shell: bash
+    # - name: If token input is set, process online
+    #   if: ${{ inputs.token != ''}}
+    #   run: |
+    #     ./codecov \ 
+    #     --provider-token ${{ secrets.GITHUB_TOKEN }} \ 
+    #     --matrix ${{ toJSON(matrix) }}
+    #   shell: bash
