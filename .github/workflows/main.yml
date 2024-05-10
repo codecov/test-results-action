@@ -19,29 +19,18 @@ jobs:
         uses: ./
         with:
           files: ./demo/calculator/junit.xml
-          flags: ${{ matrix.os }}
           verbose: true
-          token: ${{ secrets.CODECOV_ORG_TOKEN }}
       - name: Upload test results to Codecov (demo)
         uses: ./
         with:
           files: ./demo/coverage-test/junit.xml
-          flags: ${{ matrix.os }}
-          verbose: true
-          token: ${{ secrets.CODECOV_ORG_TOKEN }}
       - name: Upload test results to Codecov (calculator) (staging)
         uses: ./
         with:
           files: ./demo/calculator/junit.xml
-          flags: ${{ matrix.os }}
           verbose: true
-          url: ${{ secrets.CODECOV_STAGING_URL }}
-          token: ${{ secrets.CODECOV_ORG_TOKEN_STAGING }}
       - name: Upload test results to Codecov (demo) (staging)
         uses: ./
         with:
-          url: ${{ secrets.CODECOV_STAGING_URL }}
-          token: ${{ secrets.CODECOV_ORG_TOKEN_STAGING }}
           files: ./demo/coverage-test/junit.xml
-          flags: ${{ matrix.os }}
           verbose: true

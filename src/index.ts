@@ -1,6 +1,8 @@
 import * as fs from 'fs';
-import * as https from 'https';
 import * as path from 'path';
+import {pipeline} from 'stream/promises';
+import {ReadableStream} from 'stream/web';
+
 
 import * as exec from '@actions/exec';
 
@@ -36,65 +38,67 @@ try {
 
   const filename = path.join(__dirname, getUploaderName(platform));
 
-  https.get(getBaseUrl(platform, uploaderVersion), (res) => {
-    // Image will be stored at this path
-    const filePath = fs.createWriteStream(filename);
-    res.pipe(filePath);
-    filePath
-        .on('error', (err) => {
-          setFailure(
-              `Codecov: Failed to write uploader binary: ${err.message}`,
-              true,
-          );
-        }).on('finish', async () => {
-          filePath.close();
-
-          await verify(filename, platform, uploaderVersion, verbose, failCi);
-          await versionInfo(platform, uploaderVersion);
-          await fs.chmodSync(filename, '777');
-
-          const unlink = () => {
-            fs.unlink(filename, (err) => {
-              if (err) {
-                setFailure(
-                    `Codecov: Could not unlink uploader: ${err.message}`,
-                    failCi,
-                );
-              }
-            });
-          };
-
-
-          const doUploadTestResults = async () => {
-            await exec.exec(
-                getCommand(filename, args, uploadCommand).join(' '),
-                uploadExecArgs,
-                uploadOptions,
-            );
-          };
-
-
-          const runCmd = async (fn, fnName) => {
-            await fn().catch(
-                (err) => {
-                  setFailure(
-                      `Codecov: 
-                        Failed to properly ${fnName}: ${err.message}`,
-                      failCi,
-                  );
-                },
-            );
-          };
-
-          const runCommands = async () => {
-            await runCmd(doUploadTestResults, 'upload report');
-          };
-
-
-          await runCommands();
-          unlink();
-        });
+  const fileWriteStream = fs.createWriteStream(filename, {
+    flags: 'w',
   });
+
+  try {
+    const res = await fetch(getBaseUrl(platform, uploaderVersion));
+    await pipeline(res.body as ReadableStream, fileWriteStream);
+  } catch (err) {
+    setFailure(
+        `Codecov: Failed to write uploader binary: ${err.message}`,
+        true,
+    );
+  }
+
+  fileWriteStream.close();
+
+  await verify(filename, platform, uploaderVersion, verbose, failCi);
+  await versionInfo(platform, uploaderVersion);
+  await fs.chmodSync(filename, '777');
+
+
+  const unlink = () => {
+    fs.unlink(filename, (err) => {
+      if (err) {
+        setFailure(
+            `Codecov: Could not unlink uploader: ${err.message}`,
+            failCi,
+        );
+      }
+    });
+  };
+
+
+  const doUploadTestResults = async () => {
+    await exec.exec(
+        getCommand(filename, args, uploadCommand).join(' '),
+        uploadExecArgs,
+        uploadOptions,
+    );
+  };
+
+
+  const runCmd = async (fn, fnName) => {
+    await fn().catch(
+        (err) => {
+          setFailure(
+              `Codecov: 
+                Failed to properly ${fnName}: ${err.message}`,
+              failCi,
+          );
+        },
+    );
+  };
+
+  const runCommands = async () => {
+    await runCmd(doUploadTestResults, 'upload test result files');
+  };
+
+
+  await runCommands();
+  unlink();
 } catch (err) {
   setFailure(`Codecov: Encountered an unexpected error ${err.message}`, failCi);
 }

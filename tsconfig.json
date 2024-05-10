@@ -6,7 +6,8 @@
         "resolveJsonModule": true,
         "rootDir": ".",
         "sourceMap": true,
-        "target": "es2015"
+        "target": "es2022",
+        "module": "es2022"
     },
     "include": [
         "src/**/*.ts"

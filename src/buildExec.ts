@@ -1,10 +1,7 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 
-
-const context = github.context;
 
 const isTrue = (variable) => {
   const lowercase = variable.toLowerCase();
@@ -19,14 +16,10 @@ const isTrue = (variable) => {
 
 
 const buildGeneralExec = () => {
-  const codecovYmlPath = core.getInput('codecov_yml_path');
   const url = core.getInput('url');
   const verbose = isTrue(core.getInput('verbose'));
   const args = [];
 
-  if (codecovYmlPath) {
-    args.push('--codecov-yml-path', `${codecovYmlPath}`);
-  }
   if (url) {
     args.push('--enterprise-url', `${url}`);
   }
@@ -37,6 +30,7 @@ const buildGeneralExec = () => {
 };
 
 const buildUploadExec = () => {
+  const token = core.getInput('token');
   const disableSearch = isTrue(core.getInput('disable_search'));
   const dryRun = isTrue(core.getInput('dry_run'));
   const envVars = core.getInput('env_vars');
@@ -44,25 +38,15 @@ const buildUploadExec = () => {
   const failCi = isTrue(core.getInput('fail_ci_if_error'));
   const file = core.getInput('file');
   const files = core.getInput('files');
-  const flags = core.getInput('flags');
   const handleNoReportsFound = isTrue(core.getInput('handle_no_reports_found'));
-  const name = core.getInput('name');
   const os = core.getInput('os');
-  const overrideBranch = core.getInput('override_branch');
-  const overrideBuild = core.getInput('override_build');
-  const overrideBuildUrl = core.getInput('override_build_url');
-  const overrideCommit = core.getInput('override_commit');
-  const overridePr = core.getInput('override_pr');
-  const reportCode = core.getInput('report_code');
   const rootDir = core.getInput('root_dir');
   const searchDir = core.getInput('directory');
-  const slug = core.getInput('slug');
-  const token = core.getInput('token');
   let uploaderVersion = core.getInput('version');
   const workingDir = core.getInput('working-directory');
 
   const uploadExecArgs = [];
-  const uploadCommand = 'do-upload';
+  const uploadCommand = 'process-test-results';
   const uploadOptions:any = {};
   uploadOptions.env = Object.assign(process.env, {
     GITHUB_ACTION: process.env.GITHUB_ACTION,
@@ -82,7 +66,7 @@ const buildUploadExec = () => {
     }
   }
   if (token) {
-    uploadOptions.env.CODECOV_TOKEN = token;
+    uploadExecArgs.push('--provider-token', token);
   }
   if (disableSearch) {
     uploadExecArgs.push('--disable-search');
@@ -107,43 +91,8 @@ const buildUploadExec = () => {
       uploadExecArgs.push('-f', `${f}`);
     });
   }
-  if (flags) {
-    flags.split(',').map((f) => f.trim()).forEach((f) => {
-      uploadExecArgs.push('-F', `${f}`);
-    });
-  }
   if (handleNoReportsFound) {
     uploadExecArgs.push('--handle-no-reports-found');
-  }
-  if (name) {
-    uploadExecArgs.push('-n', `${name}`);
-  }
-  if (overrideBranch) {
-    uploadExecArgs.push('-B', `${overrideBranch}`);
-  }
-  if (overrideBuild) {
-    uploadExecArgs.push('-b', `${overrideBuild}`);
-  }
-  if (overrideBuildUrl) {
-    uploadExecArgs.push('--build-url', `${overrideBuildUrl}`);
-  }
-  if (overrideCommit) {
-    uploadExecArgs.push('-C', `${overrideCommit}`);
-  } else if (
-    `${context.eventName}` == 'pull_request' ||
-    `${context.eventName}` == 'pull_request_target'
-  ) {
-    uploadExecArgs.push('-C', `${context.payload.pull_request.head.sha}`);
-  }
-  if (overridePr) {
-    uploadExecArgs.push('-P', `${overridePr}`);
-  } else if (
-    `${context.eventName}` == 'pull_request_target'
-  ) {
-    uploadExecArgs.push('-P', `${context.payload.number}`);
-  }
-  if (reportCode) {
-    uploadExecArgs.push('--report-code', `${reportCode}`);
   }
   if (rootDir) {
     uploadExecArgs.push('--network-root-folder', `${rootDir}`);
@@ -151,17 +100,12 @@ const buildUploadExec = () => {
   if (searchDir) {
     uploadExecArgs.push('-s', `${searchDir}`);
   }
-  if (slug) {
-    uploadExecArgs.push('-r', `${slug}`);
-  }
   if (workingDir) {
     uploadOptions.cwd = workingDir;
   }
   if (uploaderVersion == '') {
     uploaderVersion = 'latest';
   }
-
-  uploadExecArgs.push('--report-type', 'test_results');
 
 
   return {
