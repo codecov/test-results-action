@@ -2,7 +2,7 @@ name: Workflow for Codecov Action
 on: [pull_request]
 jobs:
   run:
-    permissions: read-all
+    permissions: write-all
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
