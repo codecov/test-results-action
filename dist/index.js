@@ -26392,12 +26392,8 @@ const isTrue = (variable) => {
         lowercase === 'yes');
 };
 const buildGeneralExec = () => {
-    const url = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('url');
     const verbose = isTrue(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('verbose'));
     const args = [];
-    if (url) {
-        args.push('--enterprise-url', `${url}`);
-    }
     if (verbose) {
         args.push('-v');
     }
@@ -26405,9 +26401,9 @@ const buildGeneralExec = () => {
 };
 const buildUploadExec = () => {
     const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('token');
+    const searchDir = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('directory');
     const disableSearch = isTrue(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('disable_search'));
     const dryRun = isTrue(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('dry_run'));
-    const envVars = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('env_vars');
     const exclude = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('exclude');
     const failCi = isTrue(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('fail_ci_if_error'));
     const file = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('file');
@@ -26415,7 +26411,6 @@ const buildUploadExec = () => {
     const handleNoReportsFound = isTrue(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('handle_no_reports_found'));
     const os = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('os');
     const rootDir = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('root_dir');
-    const searchDir = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('directory');
     let uploaderVersion = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('version');
     const workingDir = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('working-directory');
     const uploadExecArgs = [];
@@ -26429,14 +26424,6 @@ const buildUploadExec = () => {
         GITHUB_SHA: process.env.GITHUB_SHA,
         GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
     });
-    const envVarsArg = [];
-    for (const envVar of envVars.split(',')) {
-        const envVarClean = envVar.trim();
-        if (envVarClean) {
-            uploadOptions.env[envVarClean] = process.env[envVarClean];
-            envVarsArg.push(envVarClean);
-        }
-    }
     if (token) {
         uploadExecArgs.push('--provider-token', token);
     }
@@ -26445,9 +26432,6 @@ const buildUploadExec = () => {
     }
     if (dryRun) {
         uploadExecArgs.push('-d');
-    }
-    if (envVarsArg.length) {
-        uploadExecArgs.push('-e', envVarsArg.join(','));
     }
     if (exclude) {
         uploadExecArgs.push('--exclude', `${exclude}`);

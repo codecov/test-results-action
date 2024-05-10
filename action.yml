@@ -33,9 +33,6 @@ inputs:
   root_dir:
     description: 'Used when not in git/hg project to identify project root directory'
     required: false
-  url:
-    description: 'Specify the base url to upload (Enterprise use)'
-    required: false
   verbose:
     description: 'Specify whether the Codecov output should be verbose'
     required: false
@@ -45,6 +42,9 @@ inputs:
   working-directory:
     description: 'Directory in which to execute codecov.sh'
     required: false
+
+
+
 
 branding:
   color: 'red'
