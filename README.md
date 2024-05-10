@@ -17,28 +17,80 @@ steps:
   with:
     fail_ci_if_error: true # optional (default = false)
     files: ./junit1.xml,./junit2.xml # optional
-    flags: py3.11 # optional
-    name: codecov-umbrella # optional
-    token: ${{ secrets.CODECOV_TOKEN }} # required
+    token: ${{ secrets.CODECOV_GITHUB_TOKEN }} # optional (default = false)
     verbose: true # optional (default = false)
 ```
 
-The Codecov token can also be passed in via environment variables:
+### IMPORTANT NOTES
+It's important that this action only runs once during your CI, as every run of the action will overwrite the comment left by the previous run.
+
+If you are generating test result reports in many jobs/steps then the upload-artifact will be essential. Using this action you can temporarily store reports,
+and download them for later use. In our case, we can generate as many reports as we'd like and store them, and at the end of CI we can download them all and
+use the test results action. Here's an example of what this would look like for a CI workflow that uses multiple jobs and the matrix strategy to generate multiple
+test reports. It's crucial that both the name of the artifact and name of the files are unique. 
+
+You can find the repository for the upload-artifact [here](https://github.com/actions/upload-artifact).
+
+It is also important that the test-results-action has access to a github token with permissions to write to pull requests. This can easily be done by giving the
+default GITHUB_TOKEN generated for the action permission to write to pull requests. This can be done by adding the following.
 
 ```yaml
-steps:
-- uses: actions/checkout@master
-- uses: codecov/test-results-action@v0
-  with:
-    fail_ci_if_error: true # optional (default = false)
-    files: ./junit1.xml,./junit2.xml # optional
-    flags: python3.10 # optional
-    name: codecov-umbrella # optional
-    verbose: true # optional (default = false)
-  env:
-    CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+permissions:
+  pull-requests: write
 ```
->**Note**: This assumes that you've set your Codecov token inside *Settings > Secrets* as `CODECOV_TOKEN`. If not, you can [get an upload token](https://docs.codecov.io/docs/frequently-asked-questions#section-where-is-the-repository-upload-token-found-) for your specific repo on [codecov.io](https://www.codecov.io). Keep in mind that secrets are *not* available to forks of repositories.
+
+The docs for permissions for github actions are [here](https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs).
+
+```yaml
+name: Example workflow
+on: [pull_request]
+
+jobs:
+  frontend:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Run tests
+        run: npx vitest --reporter=junit
+
+      - name: Store results
+        uses: actions/upload-artifact@v4
+        with:
+          name: codecov-frontend-junit-${{ matrix.os }}
+          path: frontend-${{ matrix.os }}-junit.xml
+  backend:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Run tests
+        run: pytest --junit-xml=backend-${{ matrix.os }}-junit.xml
+      - name: Store results
+        uses: actions/upload-artifact@v4
+        with:
+          name: codecov-backend-junit-${{ matrix.os }}
+          path: backend-${{ matrix.os }}-junit.xml
+
+  results:
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    needs: [frontend, backend]
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: codecov-*-junit-*
+          merge-multiple: true
+          path: artifact
+      - name: Process test results
+        uses: codecov/test-results-action@v0
+        with:
+          directory: artifact
+```
 
 ## Arguments
 
@@ -46,76 +98,16 @@ Codecov's Action supports inputs from the user. These inputs, along with their d
 
 | Input  | Description | Required |
 | :---       |     :---     |    :---:   |
-| `token` | Repository Codecov token. Used to authorize report uploads | *Required 
-| `codecov_yml_path` | Specify the path to the Codecov YML | Optional 
-| `commit_parent` | Override to specify the parent commit SHA | Optional 
+| `token` | Github token to use to authenticate with the Github API to post/edit comments | Optional 
 | `directory` | Directory to search for test result reports. | Optional 
 | `disable_search` | Disable search for test result files. This is helpful when specifying what files you want to upload with the --file option. | Optional 
-| `dry_run` | Don't upload files to Codecov | Optional 
-| `env_vars` | Environment variables to tag the upload with (e.g. PYTHON \| OS,PYTHON) | Optional 
 | `exclude` | Folders to exclude from search | Optional 
 | `fail_ci_if_error` | Specify whether or not CI build should fail if Codecov runs into an error during upload | Optional 
 | `file` | Path to test result file to upload | Optional 
 | `files` | Comma-separated list of files to upload | Optional 
-| `flags` | Flag upload to group test results (e.g. py3.10 | py3.11 | py3.12) | Optional 
 | `handle_no_reports_found` | Raise no exceptions when no test result reports found | Optional 
-| `name` | User defined upload name. Visible in Codecov UI | Optional 
 | `os` | Override the assumed OS. Options are linux \| macos \| windows \| . | Optional 
-| `override_branch` | Specify the branch name | Optional 
-| `override_build` | Specify the build number | Optional 
-| `override_build_url` | The URL of the build where this is running | Optional 
-| `override_commit` | Specify the commit SHA | Optional 
-| `override_pr` | Specify the pull request number | Optional 
-| `report_code` | The code of the report. If unsure, do not include | Optional 
 | `root_dir` | Used when not in git/hg project to identify project root directory | Optional 
-| `slug` | Specify the slug manually (Enterprise use) | Optional 
-| `url` | Specify the base url to upload (Enterprise use) | Optional 
 | `verbose` | Specify whether the Codecov output should be verbose | Optional 
 | `version` | Specify which version of the Codecov CLI should be used. Defaults to `latest` | Optional 
 | `working-directory` | Directory in which to execute codecov.sh | Optional 
-
-### Example `workflow.yml` with Codecov Action
-
-```yaml
-name: Example workflow for Codecov
-on: [push]
-jobs:
-  run:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: '3.10'
-    steps:
-    - uses: actions/checkout@master
-    - name: Setup Python
-      uses: actions/setup-python@master
-      with:
-        python-version: 3.10
-    - name: Generate coverage and test result report
-      run: |
-        pip install pytest
-        pip install pytest-cov
-        pytest --cov=./ --cov-report=xml --junitxml=./junit.xml
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
-      with:
-        files: ./junit.xml,!./cache
-        flags: python3.10
-        name: codecov-umbrella-test-results
-        token: ${{ secrets.CODECOV_TOKEN }}
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        directory: ./coverage/reports/
-        env_vars: OS,PYTHON
-        fail_ci_if_error: true
-        files: ./coverage1.xml,./coverage2.xml,!./cache
-        flags: unittests
-        name: codecov-umbrella
-        token: ${{ secrets.CODECOV_TOKEN }}
-        verbose: true
-```
