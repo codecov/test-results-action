@@ -13,7 +13,7 @@ Inside your `.github/workflows/workflow.yml` file:
 ```yaml
 steps:
 - uses: actions/checkout@master
-- uses: codecov/test-results-action@v0
+- uses: codecov/test-results-action@v1
   with:
     fail_ci_if_error: true # optional (default = false)
     files: ./junit1.xml,./junit2.xml # optional
@@ -28,7 +28,7 @@ The Codecov token can also be passed in via environment variables:
 ```yaml
 steps:
 - uses: actions/checkout@master
-- uses: codecov/test-results-action@v0
+- uses: codecov/test-results-action@v1
   with:
     fail_ci_if_error: true # optional (default = false)
     files: ./junit1.xml,./junit2.xml # optional
