@@ -18,6 +18,7 @@ jobs:
       - name: Upload test results to Codecov (calculator)
         uses: ./
         with:
+          fail_ci_if_error: true
           files: ./demo/calculator/junit.xml
           flags: ${{ matrix.os }}
           verbose: true
@@ -25,6 +26,7 @@ jobs:
       - name: Upload test results to Codecov (demo)
         uses: ./
         with:
+          fail_ci_if_error: true
           files: ./demo/coverage-test/junit.xml
           flags: ${{ matrix.os }}
           verbose: true
@@ -32,6 +34,7 @@ jobs:
       - name: Upload test results to Codecov (calculator) (staging)
         uses: ./
         with:
+          fail_ci_if_error: true
           files: ./demo/calculator/junit.xml
           flags: ${{ matrix.os }}
           verbose: true
@@ -40,6 +43,7 @@ jobs:
       - name: Upload test results to Codecov (demo) (staging)
         uses: ./
         with:
+          fail_ci_if_error: true
           url: ${{ secrets.CODECOV_STAGING_URL }}
           token: ${{ secrets.CODECOV_ORG_TOKEN_STAGING }}
           files: ./demo/coverage-test/junit.xml
