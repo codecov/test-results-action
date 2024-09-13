@@ -89,7 +89,10 @@ const verify = async (
       try {
         await execSync(command, {stdio: 'inherit'});
       } catch (err) {
-        setFailure(`Codecov: Error verifying gpg signature: ${err.message}`, failCi);
+        setFailure(
+            `Codecov: Error verifying gpg signature: ${err.message}`,
+            failCi,
+        );
       }
     };
 
