@@ -32084,8 +32084,72 @@ var exec = __nccwpck_require__(1514);
 var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(5438);
+;// CONCATENATED MODULE: ./src/helpers.ts
+
+const PLATFORMS = [
+    'linux',
+    'macos',
+    'windows',
+    'alpine',
+    'linux-arm64',
+    'alpine-arm64',
+];
+const setFailure = (message, failCi) => {
+    failCi ? core.setFailed(message) : core.warning(message);
+    if (failCi) {
+        process.exit();
+    }
+};
+const getUploaderName = (platform) => {
+    if (isWindows(platform)) {
+        return 'codecov.exe';
+    }
+    else {
+        return 'codecov';
+    }
+};
+const isValidPlatform = (platform) => {
+    return PLATFORMS.includes(platform);
+};
+const isWindows = (platform) => {
+    return platform === 'windows';
+};
+const getPlatform = (os) => {
+    var _a;
+    if (isValidPlatform(os)) {
+        core.info(`==> ${os} OS provided`);
+        return os;
+    }
+    const platform = (_a = process.env.RUNNER_OS) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+    if (isValidPlatform(platform)) {
+        core.info(`==> ${platform} OS detected`);
+        return platform;
+    }
+    core.info('==> Could not detect OS or provided OS is invalid. Defaulting to linux');
+    return 'linux';
+};
+const getBaseUrl = (platform, version) => {
+    return `https://cli.codecov.io/${version}/${platform}/${getUploaderName(platform)}`;
+};
+const getCommand = (filename, generalArgs, command) => {
+    const fullCommand = [filename, ...generalArgs, command];
+    core.info(`==> Running command '${fullCommand.join(' ')}'`);
+    return fullCommand;
+};
+
+
 ;// CONCATENATED MODULE: ./src/buildExec.ts
 /* eslint-disable  @typescript-eslint/no-explicit-any */
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
 
 
 const context = github.context;
@@ -32113,6 +32177,24 @@ const buildGeneralExec = () => {
     }
     return { args, verbose };
 };
+const getToken = () => __awaiter(void 0, void 0, void 0, function* () {
+    let token = core.getInput('token');
+    let url = core.getInput('url');
+    const useOIDC = isTrue(core.getInput('use_oidc'));
+    if (useOIDC) {
+        if (!url) {
+            url = 'https://codecov.io';
+        }
+        try {
+            token = yield core.getIDToken(url);
+            return Promise.resolve(token);
+        }
+        catch (err) {
+            setFailure(`Codecov: Failed to get OIDC token with url: ${url}. ${err.message}`, true);
+        }
+    }
+    return token;
+});
 const buildUploadExec = () => {
     const disableSearch = isTrue(core.getInput('disable_search'));
     const dryRun = isTrue(core.getInput('dry_run'));
@@ -32134,7 +32216,7 @@ const buildUploadExec = () => {
     const rootDir = core.getInput('root_dir');
     const searchDir = core.getInput('directory');
     const slug = core.getInput('slug');
-    const token = core.getInput('token');
+    const token = getToken();
     let uploaderVersion = core.getInput('version');
     const workingDir = core.getInput('working-directory');
     const uploadExecArgs = [];
@@ -32245,60 +32327,6 @@ const buildUploadExec = () => {
 };
 
 
-;// CONCATENATED MODULE: ./src/helpers.ts
-
-const PLATFORMS = [
-    'linux',
-    'macos',
-    'windows',
-    'alpine',
-    'linux-arm64',
-    'alpine-arm64',
-];
-const setFailure = (message, failCi) => {
-    failCi ? core.setFailed(message) : core.warning(message);
-    if (failCi) {
-        process.exit();
-    }
-};
-const getUploaderName = (platform) => {
-    if (isWindows(platform)) {
-        return 'codecov.exe';
-    }
-    else {
-        return 'codecov';
-    }
-};
-const isValidPlatform = (platform) => {
-    return PLATFORMS.includes(platform);
-};
-const isWindows = (platform) => {
-    return platform === 'windows';
-};
-const getPlatform = (os) => {
-    var _a;
-    if (isValidPlatform(os)) {
-        core.info(`==> ${os} OS provided`);
-        return os;
-    }
-    const platform = (_a = process.env.RUNNER_OS) === null || _a === void 0 ? void 0 : _a.toLowerCase();
-    if (isValidPlatform(platform)) {
-        core.info(`==> ${platform} OS detected`);
-        return platform;
-    }
-    core.info('==> Could not detect OS or provided OS is invalid. Defaulting to linux');
-    return 'linux';
-};
-const getBaseUrl = (platform, version) => {
-    return `https://cli.codecov.io/${version}/${platform}/${getUploaderName(platform)}`;
-};
-const getCommand = (filename, generalArgs, command) => {
-    const fullCommand = [filename, ...generalArgs, command];
-    core.info(`==> Running command '${fullCommand.join(' ')}'`);
-    return fullCommand;
-};
-
-
 ;// CONCATENATED MODULE: external "node:child_process"
 const external_node_child_process_namespaceObject = require("node:child_process");
 ;// CONCATENATED MODULE: external "node:crypto"
@@ -32310,7 +32338,7 @@ const external_node_path_namespaceObject = require("node:path");
 // EXTERNAL MODULE: ./node_modules/undici/index.js
 var undici = __nccwpck_require__(1773);
 ;// CONCATENATED MODULE: ./src/validate.ts
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var validate_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -32326,7 +32354,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 
-const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 0, void 0, void 0, function* () {
+const verify = (filename, platform, version, verbose, failCi) => validate_awaiter(void 0, void 0, void 0, function* () {
     try {
         const uploaderName = getUploaderName(platform);
         // Get SHASUM and SHASUM signature files
@@ -32343,8 +32371,8 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
             console.log(`Received SHA256SUM signature ${shaSig}`);
         }
         yield external_node_fs_namespaceObject.writeFileSync(external_node_path_namespaceObject.join(__dirname, `${uploaderName}.SHA256SUM.sig`), shaSig);
-        const validateSha = () => __awaiter(void 0, void 0, void 0, function* () {
-            const calculateHash = (filename) => __awaiter(void 0, void 0, void 0, function* () {
+        const validateSha = () => validate_awaiter(void 0, void 0, void 0, function* () {
+            const calculateHash = (filename) => validate_awaiter(void 0, void 0, void 0, function* () {
                 const stream = external_node_fs_namespaceObject.createReadStream(filename);
                 const uploaderSha = external_node_crypto_namespaceObject.createHash(`sha256`);
                 stream.pipe(uploaderSha);
@@ -32362,7 +32390,7 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
                     `uploader hash: ${hash}, public hash: ${shasum}`, failCi);
             }
         });
-        const verifySignature = () => __awaiter(void 0, void 0, void 0, function* () {
+        const verifySignature = () => validate_awaiter(void 0, void 0, void 0, function* () {
             const args = [
                 '--logger-fd',
                 '1',
@@ -32377,7 +32405,7 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
                 setFailure(`Codecov: Error verifying gpg signature: ${err.message}`, failCi);
             }
         });
-        const importKey = () => __awaiter(void 0, void 0, void 0, function* () {
+        const importKey = () => validate_awaiter(void 0, void 0, void 0, function* () {
             const args = [
                 '--logger-fd',
                 '1',
