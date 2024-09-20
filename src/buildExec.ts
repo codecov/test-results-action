@@ -3,6 +3,10 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
+import {
+  setFailure,
+} from './helpers';
+
 
 const context = github.context;
 
@@ -36,6 +40,27 @@ const buildGeneralExec = () => {
   return {args, verbose};
 };
 
+const getToken = async (): Promise<string> => {
+  let token = core.getInput('token');
+  let url = core.getInput('url');
+  const useOIDC = isTrue(core.getInput('use_oidc'));
+  if (useOIDC) {
+    if (!url) {
+      url = 'https://codecov.io';
+    }
+    try {
+      token = await core.getIDToken(url);
+      return Promise.resolve(token);
+    } catch (err) {
+      setFailure(
+          `Codecov: Failed to get OIDC token with url: ${url}. ${err.message}`,
+          true,
+      );
+    }
+  }
+  return token;
+};
+
 const buildUploadExec = () => {
   const disableSearch = isTrue(core.getInput('disable_search'));
   const dryRun = isTrue(core.getInput('dry_run'));
@@ -57,7 +82,7 @@ const buildUploadExec = () => {
   const rootDir = core.getInput('root_dir');
   const searchDir = core.getInput('directory');
   const slug = core.getInput('slug');
-  const token = core.getInput('token');
+  const token = getToken();
   let uploaderVersion = core.getInput('version');
   const workingDir = core.getInput('working-directory');
 
