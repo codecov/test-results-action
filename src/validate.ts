@@ -1,4 +1,4 @@
-import {execSync} from 'node:child_process';
+import {spawnSync} from 'node:child_process';
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -77,17 +77,16 @@ const verify = async (
     };
 
     const verifySignature = async () => {
-      const command = [
-        'gpg',
+      const args = [
         '--logger-fd',
         '1',
         '--verify',
         path.join(__dirname, `${uploaderName}.SHA256SUM.sig`),
         path.join(__dirname, `${uploaderName}.SHA256SUM`),
-      ].join(' ');
+      ];
 
       try {
-        await execSync(command, {stdio: 'inherit'});
+        await spawnSync('gpg', args, {stdio: 'inherit'});
       } catch (err) {
         setFailure(
             `Codecov: Error verifying gpg signature: ${err.message}`,
@@ -97,17 +96,16 @@ const verify = async (
     };
 
     const importKey = async () => {
-      const command = [
-        'gpg',
+      const args = [
         '--logger-fd',
         '1',
         '--no-default-keyring',
         '--import',
         path.join(__dirname, 'pgp_keys.asc'),
-      ].join(' ');
+      ];
 
       try {
-        await execSync(command, {stdio: 'inherit'});
+        await spawnSync('gpg', args, {stdio: 'inherit'});
       } catch (err) {
         setFailure(`Codecov: Error importing gpg key: ${err.message}`, failCi);
       }
