@@ -32391,32 +32391,30 @@ const verify = (filename, platform, version, verbose, failCi) => validate_awaite
             }
         });
         const verifySignature = () => validate_awaiter(void 0, void 0, void 0, function* () {
-            const command = [
-                'gpg',
+            const args = [
                 '--logger-fd',
                 '1',
                 '--verify',
                 external_node_path_namespaceObject.join(__dirname, `${uploaderName}.SHA256SUM.sig`),
                 external_node_path_namespaceObject.join(__dirname, `${uploaderName}.SHA256SUM`),
-            ].join(' ');
+            ];
             try {
-                yield (0,external_node_child_process_namespaceObject.execSync)(command, { stdio: 'inherit' });
+                yield (0,external_node_child_process_namespaceObject.spawnSync)('gpg', args, { stdio: 'inherit' });
             }
             catch (err) {
                 setFailure(`Codecov: Error verifying gpg signature: ${err.message}`, failCi);
             }
         });
         const importKey = () => validate_awaiter(void 0, void 0, void 0, function* () {
-            const command = [
-                'gpg',
+            const args = [
                 '--logger-fd',
                 '1',
                 '--no-default-keyring',
                 '--import',
                 external_node_path_namespaceObject.join(__dirname, 'pgp_keys.asc'),
-            ].join(' ');
+            ];
             try {
-                yield (0,external_node_child_process_namespaceObject.execSync)(command, { stdio: 'inherit' });
+                yield (0,external_node_child_process_namespaceObject.spawnSync)('gpg', args, { stdio: 'inherit' });
             }
             catch (err) {
                 setFailure(`Codecov: Error importing gpg key: ${err.message}`, failCi);
