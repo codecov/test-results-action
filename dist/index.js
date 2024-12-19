@@ -32439,7 +32439,7 @@ const versionInfo = (platform, version) => version_awaiter(void 0, void 0, void 
         core.info(`==> Running version ${version}`);
     }
     try {
-        const metadataRes = yield (0,undici.request)(`https://cli.codecov.io/${platform}/latest`, {
+        const metadataRes = yield (0,undici.request)(`https://cli.codecov.io/api/${platform}/latest`, {
             headers: { 'Accept': 'application/json' },
         });
         const metadata = yield metadataRes.body.json();
