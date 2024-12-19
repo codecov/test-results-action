@@ -32097,6 +32097,26 @@ const isTrue = (variable) => {
         lowercase === 'y' ||
         lowercase === 'yes');
 };
+const isPullRequestFromFork = () => {
+    core.info(`eventName: ${context.eventName}`);
+    if (!['pull_request', 'pull_request_target'].includes(context.eventName)) {
+        return false;
+    }
+    const baseLabel = context.payload.pull_request.base.label;
+    const headLabel = context.payload.pull_request.head.label;
+    core.info(`baseRef: ${baseLabel} | headRef: ${headLabel}`);
+    return baseLabel.split(':')[0] !== headLabel.split(':')[0];
+};
+const getOverrideBranch = (token) => {
+    let overrideBranch = core.getInput('override_branch');
+    if (!overrideBranch && !token && isPullRequestFromFork()) {
+        core.info('==> Fork detected, tokenless uploading used');
+        // backwards compatibility with certain versions of the CLI that expect this
+        process.env['TOKENLESS'] = context.payload.pull_request.head.label;
+        overrideBranch = context.payload.pull_request.head.label;
+    }
+    return overrideBranch;
+};
 const buildGeneralExec = () => {
     const codecovYmlPath = core.getInput('codecov_yml_path');
     const url = core.getInput('url');
@@ -32125,7 +32145,8 @@ const buildUploadExec = () => {
     const handleNoReportsFound = isTrue(core.getInput('handle_no_reports_found'));
     const name = core.getInput('name');
     const os = core.getInput('os');
-    const overrideBranch = core.getInput('override_branch');
+    const token = core.getInput('token');
+    const overrideBranch = getOverrideBranch(token);
     const overrideBuild = core.getInput('override_build');
     const overrideBuildUrl = core.getInput('override_build_url');
     const overrideCommit = core.getInput('override_commit');
@@ -32134,7 +32155,6 @@ const buildUploadExec = () => {
     const rootDir = core.getInput('root_dir');
     const searchDir = core.getInput('directory');
     const slug = core.getInput('slug');
-    const token = core.getInput('token');
     let uploaderVersion = core.getInput('version');
     const workingDir = core.getInput('working-directory');
     const uploadExecArgs = [];
