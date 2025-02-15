@@ -3,18 +3,24 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
+import {
+  isTrue,
+  getPlatform,
+  getUploaderName,
+} from './helpers';
+
 
 const context = github.context;
 
-const isTrue = (variable) => {
-  const lowercase = variable.toLowerCase();
-  return (
-    lowercase === '1' ||
-    lowercase === 't' ||
-    lowercase === 'true' ||
-    lowercase === 'y' ||
-    lowercase === 'yes'
-  );
+const cleanEnvVars = (envVars: string) => {
+  const cleanedVars = [];
+  for (const envVar of envVars.split(',')) {
+    const envVarClean = envVar.trim();
+    if (envVarClean) {
+      cleanedVars.push(envVarClean);
+    }
+  }
+  return cleanedVars;
 };
 
 const isPullRequestFromFork = (): boolean => {
@@ -42,10 +48,18 @@ const getOverrideBranch = (token: string): string => {
   return overrideBranch;
 };
 
-const buildGeneralExec = () => {
+const buildDownloadOptions = () => {
+  const os = core.getInput('os');
+  const platform = getPlatform(os);
+  const uploaderName = getUploaderName(platform);
+  const uploaderVersion = core.getInput('version') || 'latest';
+
+  return {platform, uploaderName, uploaderVersion};
+};
+
+const buildGeneralArgs = (verbose: boolean) => {
   const codecovYmlPath = core.getInput('codecov_yml_path');
   const url = core.getInput('url');
-  const verbose = isTrue(core.getInput('verbose'));
   const args = [];
 
   if (codecovYmlPath) {
@@ -57,22 +71,19 @@ const buildGeneralExec = () => {
   if (verbose) {
     args.push('-v');
   }
-  return {args, verbose};
+
+  return args;
 };
 
-const buildUploadExec = () => {
+const buildUploadArgs = (token: string, envVars, failCi: boolean) => {
   const disableSearch = isTrue(core.getInput('disable_search'));
   const dryRun = isTrue(core.getInput('dry_run'));
-  const envVars = core.getInput('env_vars');
   const exclude = core.getInput('exclude');
-  const failCi = isTrue(core.getInput('fail_ci_if_error'));
   const file = core.getInput('file');
   const files = core.getInput('files');
   const flags = core.getInput('flags');
   const handleNoReportsFound = isTrue(core.getInput('handle_no_reports_found'));
   const name = core.getInput('name');
-  const os = core.getInput('os');
-  const token = core.getInput('token');
   const overrideBranch = getOverrideBranch(token);
   const overrideBuild = core.getInput('override_build');
   const overrideBuildUrl = core.getInput('override_build_url');
@@ -82,40 +93,18 @@ const buildUploadExec = () => {
   const rootDir = core.getInput('root_dir');
   const searchDir = core.getInput('directory');
   const slug = core.getInput('slug');
-  let uploaderVersion = core.getInput('version');
-  const workingDir = core.getInput('working-directory');
 
   const uploadExecArgs = [];
   const uploadCommand = 'do-upload';
-  const uploadOptions: any = {};
-  uploadOptions.env = Object.assign(process.env, {
-    GITHUB_ACTION: process.env.GITHUB_ACTION,
-    GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
-    GITHUB_REF: process.env.GITHUB_REF,
-    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
-    GITHUB_SHA: process.env.GITHUB_SHA,
-    GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
-  });
 
-  const envVarsArg = [];
-  for (const envVar of envVars.split(',')) {
-    const envVarClean = envVar.trim();
-    if (envVarClean) {
-      uploadOptions.env[envVarClean] = process.env[envVarClean];
-      envVarsArg.push(envVarClean);
-    }
-  }
-  if (token) {
-    uploadOptions.env.CODECOV_TOKEN = token;
-  }
   if (disableSearch) {
     uploadExecArgs.push('--disable-search');
   }
   if (dryRun) {
     uploadExecArgs.push('-d');
   }
-  if (envVarsArg.length) {
-    uploadExecArgs.push('-e', envVarsArg.join(','));
+  if (envVars.length) {
+    uploadExecArgs.push('-e', envVars.join(','));
   }
   if (exclude) {
     uploadExecArgs.push('--exclude', `${exclude}`);
@@ -178,28 +167,56 @@ const buildUploadExec = () => {
   if (slug) {
     uploadExecArgs.push('-r', `${slug}`);
   }
-  if (workingDir) {
-    uploadOptions.cwd = workingDir;
-  }
-  if (uploaderVersion == '') {
-    uploaderVersion = 'latest';
-  }
 
   uploadExecArgs.push('--report-type', 'test_results');
 
-
   return {
     uploadExecArgs,
-    uploadOptions,
-    failCi,
-    os,
-    uploaderVersion,
     uploadCommand,
   };
 };
 
+const buildExecutionEnvironment = (token: string, envVars) => {
+  const uploadOptions: any = {};
+  uploadOptions.env = Object.assign(process.env, {
+    GITHUB_ACTION: process.env.GITHUB_ACTION,
+    GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
+    GITHUB_REF: process.env.GITHUB_REF,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+    GITHUB_SHA: process.env.GITHUB_SHA,
+    GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
+  });
+
+  for (const envVar of envVars) {
+    uploadOptions.env[envVar] = process.env[envVar];
+  }
+
+  if (token) {
+    uploadOptions.env.CODECOV_TOKEN = token;
+  }
+
+  const workingDir = core.getInput('working-directory');
+  if (workingDir) {
+    uploadOptions.cwd = workingDir;
+  }
+
+  return uploadOptions;
+};
+
+const buildExecutionOptions = (failCi: boolean, verbose: boolean) => {
+  const token = core.getInput('token');
+  const envVars = core.getInput('env_vars');
+  const cleanedEnvVars = cleanEnvVars(envVars);
+
+  const generalArgs = buildGeneralArgs(verbose);
+  const {uploadExecArgs, uploadCommand} =
+      buildUploadArgs(token, cleanedEnvVars, failCi);
+  const executionEnvironment = buildExecutionEnvironment(token, cleanedEnvVars);
+
+  return {generalArgs, uploadCommand, uploadExecArgs, executionEnvironment};
+};
 
 export {
-  buildGeneralExec,
-  buildUploadExec,
+  buildDownloadOptions,
+  buildExecutionOptions,
 };

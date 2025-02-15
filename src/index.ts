@@ -2,16 +2,16 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
 
+import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 
 import {
-  buildGeneralExec,
-  buildUploadExec,
+  buildDownloadOptions,
+  buildExecutionOptions,
 } from './buildExec';
 import {
+  isTrue,
   getBaseUrl,
-  getPlatform,
-  getUploaderName,
   setFailure,
   getCommand,
 } from './helpers';
@@ -21,23 +21,46 @@ import versionInfo from './version';
 
 let failCi;
 
-try {
-  const {
-    uploadExecArgs,
-    uploadOptions,
-    failCi,
-    os,
-    uploaderVersion,
-    uploadCommand,
-  } = buildUploadExec();
-  const {args, verbose} = buildGeneralExec();
+const invokeCLI = async (
+    filename: string,
+    failCi: boolean,
+    verbose: boolean,
+) => {
+  const {generalArgs, uploadCommand, uploadExecArgs, executionEnvironment} =
+      buildExecutionOptions(failCi, verbose);
 
-  const platform = getPlatform(os);
+  const doUploadTestResults = async () => {
+    await exec.exec(
+        getCommand(filename, generalArgs, uploadCommand).join(' '),
+        uploadExecArgs,
+        executionEnvironment,
+    );
+  };
 
-  const filename = path.join(__dirname, getUploaderName(platform));
+
+  const runCmd = async (fn, fnName) => {
+    await fn().catch(
+        (err) => {
+          setFailure(
+              `Codecov: Failed to properly ${fnName}: ${err.message}`,
+              failCi,
+          );
+        },
+    );
+  };
+
+  const runCommands = async () => {
+    await runCmd(doUploadTestResults, 'upload report');
+  };
+
+  await runCommands();
+};
+
+const downloadAndInvokeCLI = (failCi: boolean, verbose: boolean) => {
+  const {platform, uploaderName, uploaderVersion} = buildDownloadOptions();
+  const filename = path.join(__dirname, uploaderName);
 
   https.get(getBaseUrl(platform, uploaderVersion), (res) => {
-    // Image will be stored at this path
     const filePath = fs.createWriteStream(filename);
     res.pipe(filePath);
     filePath
@@ -64,37 +87,27 @@ try {
             });
           };
 
-
-          const doUploadTestResults = async () => {
-            await exec.exec(
-                getCommand(filename, args, uploadCommand).join(' '),
-                uploadExecArgs,
-                uploadOptions,
-            );
-          };
-
-
-          const runCmd = async (fn, fnName) => {
-            await fn().catch(
-                (err) => {
-                  setFailure(
-                      `Codecov: 
-                        Failed to properly ${fnName}: ${err.message}`,
-                      failCi,
-                  );
-                },
-            );
-          };
-
-          const runCommands = async () => {
-            await runCmd(doUploadTestResults, 'upload report');
-          };
-
-
-          await runCommands();
+          await invokeCLI(filename, failCi, verbose);
           unlink();
         });
   });
+};
+
+try {
+  const failCi = isTrue(core.getInput('fail_ci_if_error'));
+  const binaryPath = core.getInput('binary');
+  const verbose = isTrue(core.getInput('verbose'));
+
+  if (binaryPath) {
+    invokeCLI(binaryPath, failCi, verbose).catch((err) => {
+      setFailure(
+          `Codecov: Encountered an unexpected error ${err.message}`,
+          failCi,
+      );
+    });
+  } else {
+    downloadAndInvokeCLI(failCi, verbose);
+  }
 } catch (err) {
   setFailure(`Codecov: Encountered an unexpected error ${err.message}`, failCi);
 }
