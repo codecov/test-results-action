@@ -47,6 +47,7 @@ Codecov's Action supports inputs from the user. These inputs, along with their d
 | Input  | Description | Required |
 | :---       |     :---     |    :---:   |
 | `token` | Repository Codecov token. Used to authorize report uploads | *Required 
+| `binary` | The file location of a pre-downloaded version of the CLI. If specified, integrity checking will be bypassed. | Optional 
 | `codecov_yml_path` | Specify the path to the Codecov YML | Optional 
 | `commit_parent` | Override to specify the parent commit SHA | Optional 
 | `directory` | Directory to search for test result reports. | Optional 

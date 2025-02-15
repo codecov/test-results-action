@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 5241:
+/***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -135,7 +135,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
-const command_1 = __nccwpck_require__(5241);
+const command_1 = __nccwpck_require__(7351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
@@ -1143,7 +1143,7 @@ const os = __importStar(__nccwpck_require__(2037));
 const events = __importStar(__nccwpck_require__(2361));
 const child = __importStar(__nccwpck_require__(2081));
 const path = __importStar(__nccwpck_require__(1017));
-const io = __importStar(__nccwpck_require__(7351));
+const io = __importStar(__nccwpck_require__(7436));
 const ioUtil = __importStar(__nccwpck_require__(1962));
 const timers_1 = __nccwpck_require__(9512);
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -3012,7 +3012,7 @@ exports.getCmdPath = getCmdPath;
 
 /***/ }),
 
-/***/ 7351:
+/***/ 7436:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -32078,17 +32078,22 @@ var external_fs_ = __nccwpck_require__(7147);
 var external_https_ = __nccwpck_require__(5687);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(1017);
-// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(5438);
-;// CONCATENATED MODULE: ./src/buildExec.ts
-/* eslint-disable  @typescript-eslint/no-explicit-any */
+;// CONCATENATED MODULE: ./src/helpers.ts
 
-
-const context = github.context;
+const PLATFORMS = [
+    'linux',
+    'macos',
+    'windows',
+    'alpine',
+    'linux-arm64',
+    'alpine-arm64',
+];
 const isTrue = (variable) => {
     const lowercase = variable.toLowerCase();
     return (lowercase === '1' ||
@@ -32096,6 +32101,66 @@ const isTrue = (variable) => {
         lowercase === 'true' ||
         lowercase === 'y' ||
         lowercase === 'yes');
+};
+const setFailure = (message, failCi) => {
+    failCi ? core.setFailed(message) : core.warning(message);
+    if (failCi) {
+        process.exit();
+    }
+};
+const getUploaderName = (platform) => {
+    if (isWindows(platform)) {
+        return 'codecov.exe';
+    }
+    else {
+        return 'codecov';
+    }
+};
+const isValidPlatform = (platform) => {
+    return PLATFORMS.includes(platform);
+};
+const isWindows = (platform) => {
+    return platform === 'windows';
+};
+const getPlatform = (os) => {
+    var _a;
+    if (isValidPlatform(os)) {
+        core.info(`==> ${os} OS provided`);
+        return os;
+    }
+    const platform = (_a = process.env.RUNNER_OS) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+    if (isValidPlatform(platform)) {
+        core.info(`==> ${platform} OS detected`);
+        return platform;
+    }
+    core.info('==> Could not detect OS or provided OS is invalid. Defaulting to linux');
+    return 'linux';
+};
+const getBaseUrl = (platform, version) => {
+    return `https://cli.codecov.io/${version}/${platform}/${getUploaderName(platform)}`;
+};
+const getCommand = (filename, generalArgs, command) => {
+    const fullCommand = [filename, ...generalArgs, command];
+    core.info(`==> Running command '${fullCommand.join(' ')}'`);
+    return fullCommand;
+};
+
+
+;// CONCATENATED MODULE: ./src/buildExec.ts
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
+
+
+const context = github.context;
+const cleanEnvVars = (envVars) => {
+    const cleanedVars = [];
+    for (const envVar of envVars.split(',')) {
+        const envVarClean = envVar.trim();
+        if (envVarClean) {
+            cleanedVars.push(envVarClean);
+        }
+    }
+    return cleanedVars;
 };
 const isPullRequestFromFork = () => {
     core.info(`eventName: ${context.eventName}`);
@@ -32117,10 +32182,16 @@ const getOverrideBranch = (token) => {
     }
     return overrideBranch;
 };
-const buildGeneralExec = () => {
+const buildDownloadOptions = () => {
+    const os = core.getInput('os');
+    const platform = getPlatform(os);
+    const uploaderName = getUploaderName(platform);
+    const uploaderVersion = core.getInput('version') || 'latest';
+    return { platform, uploaderName, uploaderVersion };
+};
+const buildGeneralArgs = (verbose) => {
     const codecovYmlPath = core.getInput('codecov_yml_path');
     const url = core.getInput('url');
-    const verbose = isTrue(core.getInput('verbose'));
     const args = [];
     if (codecovYmlPath) {
         args.push('--codecov-yml-path', `${codecovYmlPath}`);
@@ -32131,21 +32202,17 @@ const buildGeneralExec = () => {
     if (verbose) {
         args.push('-v');
     }
-    return { args, verbose };
+    return args;
 };
-const buildUploadExec = () => {
+const buildUploadArgs = (token, envVars, failCi) => {
     const disableSearch = isTrue(core.getInput('disable_search'));
     const dryRun = isTrue(core.getInput('dry_run'));
-    const envVars = core.getInput('env_vars');
     const exclude = core.getInput('exclude');
-    const failCi = isTrue(core.getInput('fail_ci_if_error'));
     const file = core.getInput('file');
     const files = core.getInput('files');
     const flags = core.getInput('flags');
     const handleNoReportsFound = isTrue(core.getInput('handle_no_reports_found'));
     const name = core.getInput('name');
-    const os = core.getInput('os');
-    const token = core.getInput('token');
     const overrideBranch = getOverrideBranch(token);
     const overrideBuild = core.getInput('override_build');
     const overrideBuildUrl = core.getInput('override_build_url');
@@ -32155,38 +32222,16 @@ const buildUploadExec = () => {
     const rootDir = core.getInput('root_dir');
     const searchDir = core.getInput('directory');
     const slug = core.getInput('slug');
-    let uploaderVersion = core.getInput('version');
-    const workingDir = core.getInput('working-directory');
     const uploadExecArgs = [];
     const uploadCommand = 'do-upload';
-    const uploadOptions = {};
-    uploadOptions.env = Object.assign(process.env, {
-        GITHUB_ACTION: process.env.GITHUB_ACTION,
-        GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
-        GITHUB_REF: process.env.GITHUB_REF,
-        GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
-        GITHUB_SHA: process.env.GITHUB_SHA,
-        GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
-    });
-    const envVarsArg = [];
-    for (const envVar of envVars.split(',')) {
-        const envVarClean = envVar.trim();
-        if (envVarClean) {
-            uploadOptions.env[envVarClean] = process.env[envVarClean];
-            envVarsArg.push(envVarClean);
-        }
-    }
-    if (token) {
-        uploadOptions.env.CODECOV_TOKEN = token;
-    }
     if (disableSearch) {
         uploadExecArgs.push('--disable-search');
     }
     if (dryRun) {
         uploadExecArgs.push('-d');
     }
-    if (envVarsArg.length) {
-        uploadExecArgs.push('-e', envVarsArg.join(','));
+    if (envVars.length) {
+        uploadExecArgs.push('-e', envVars.join(','));
     }
     if (exclude) {
         uploadExecArgs.push('--exclude', `${exclude}`);
@@ -32247,75 +32292,42 @@ const buildUploadExec = () => {
     if (slug) {
         uploadExecArgs.push('-r', `${slug}`);
     }
-    if (workingDir) {
-        uploadOptions.cwd = workingDir;
-    }
-    if (uploaderVersion == '') {
-        uploaderVersion = 'latest';
-    }
     uploadExecArgs.push('--report-type', 'test_results');
     return {
         uploadExecArgs,
-        uploadOptions,
-        failCi,
-        os,
-        uploaderVersion,
         uploadCommand,
     };
 };
-
-
-;// CONCATENATED MODULE: ./src/helpers.ts
-
-const PLATFORMS = [
-    'linux',
-    'macos',
-    'windows',
-    'alpine',
-    'linux-arm64',
-    'alpine-arm64',
-];
-const setFailure = (message, failCi) => {
-    failCi ? core.setFailed(message) : core.warning(message);
-    if (failCi) {
-        process.exit();
+const buildExecutionEnvironment = (token, envVars) => {
+    const uploadOptions = {};
+    uploadOptions.env = Object.assign(process.env, {
+        GITHUB_ACTION: process.env.GITHUB_ACTION,
+        GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
+        GITHUB_REF: process.env.GITHUB_REF,
+        GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+        GITHUB_SHA: process.env.GITHUB_SHA,
+        GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
+    });
+    for (const envVar of envVars) {
+        uploadOptions.env[envVar] = process.env[envVar];
     }
-};
-const getUploaderName = (platform) => {
-    if (isWindows(platform)) {
-        return 'codecov.exe';
+    if (token) {
+        uploadOptions.env.CODECOV_TOKEN = token;
     }
-    else {
-        return 'codecov';
+    const workingDir = core.getInput('working-directory');
+    if (workingDir) {
+        uploadOptions.cwd = workingDir;
     }
+    return uploadOptions;
 };
-const isValidPlatform = (platform) => {
-    return PLATFORMS.includes(platform);
-};
-const isWindows = (platform) => {
-    return platform === 'windows';
-};
-const getPlatform = (os) => {
-    var _a;
-    if (isValidPlatform(os)) {
-        core.info(`==> ${os} OS provided`);
-        return os;
-    }
-    const platform = (_a = process.env.RUNNER_OS) === null || _a === void 0 ? void 0 : _a.toLowerCase();
-    if (isValidPlatform(platform)) {
-        core.info(`==> ${platform} OS detected`);
-        return platform;
-    }
-    core.info('==> Could not detect OS or provided OS is invalid. Defaulting to linux');
-    return 'linux';
-};
-const getBaseUrl = (platform, version) => {
-    return `https://cli.codecov.io/${version}/${platform}/${getUploaderName(platform)}`;
-};
-const getCommand = (filename, generalArgs, command) => {
-    const fullCommand = [filename, ...generalArgs, command];
-    core.info(`==> Running command '${fullCommand.join(' ')}'`);
-    return fullCommand;
+const buildExecutionOptions = (failCi, verbose) => {
+    const token = core.getInput('token');
+    const envVars = core.getInput('env_vars');
+    const cleanedEnvVars = cleanEnvVars(envVars);
+    const generalArgs = buildGeneralArgs(verbose);
+    const { uploadExecArgs, uploadCommand } = buildUploadArgs(token, cleanedEnvVars, failCi);
+    const executionEnvironment = buildExecutionEnvironment(token, cleanedEnvVars);
+    return { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment };
 };
 
 
@@ -32469,14 +32481,27 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 
 
+
 let failCi;
-try {
-    const { uploadExecArgs, uploadOptions, failCi, os, uploaderVersion, uploadCommand, } = buildUploadExec();
-    const { args, verbose } = buildGeneralExec();
-    const platform = getPlatform(os);
-    const filename = external_path_.join(__dirname, getUploaderName(platform));
+const invokeCLI = (filename, failCi, verbose) => src_awaiter(void 0, void 0, void 0, function* () {
+    const { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment } = buildExecutionOptions(failCi, verbose);
+    const doUploadTestResults = () => src_awaiter(void 0, void 0, void 0, function* () {
+        yield exec.exec(getCommand(filename, generalArgs, uploadCommand).join(' '), uploadExecArgs, executionEnvironment);
+    });
+    const runCmd = (fn, fnName) => src_awaiter(void 0, void 0, void 0, function* () {
+        yield fn().catch((err) => {
+            setFailure(`Codecov: Failed to properly ${fnName}: ${err.message}`, failCi);
+        });
+    });
+    const runCommands = () => src_awaiter(void 0, void 0, void 0, function* () {
+        yield runCmd(doUploadTestResults, 'upload report');
+    });
+    yield runCommands();
+});
+const downloadAndInvokeCLI = (failCi, verbose) => {
+    const { platform, uploaderName, uploaderVersion } = buildDownloadOptions();
+    const filename = external_path_.join(__dirname, uploaderName);
     external_https_.get(getBaseUrl(platform, uploaderVersion), (res) => {
-        // Image will be stored at this path
         const filePath = external_fs_.createWriteStream(filename);
         res.pipe(filePath);
         filePath
@@ -32494,22 +32519,23 @@ try {
                     }
                 });
             };
-            const doUploadTestResults = () => src_awaiter(void 0, void 0, void 0, function* () {
-                yield exec.exec(getCommand(filename, args, uploadCommand).join(' '), uploadExecArgs, uploadOptions);
-            });
-            const runCmd = (fn, fnName) => src_awaiter(void 0, void 0, void 0, function* () {
-                yield fn().catch((err) => {
-                    setFailure(`Codecov: 
-                        Failed to properly ${fnName}: ${err.message}`, failCi);
-                });
-            });
-            const runCommands = () => src_awaiter(void 0, void 0, void 0, function* () {
-                yield runCmd(doUploadTestResults, 'upload report');
-            });
-            yield runCommands();
+            yield invokeCLI(filename, failCi, verbose);
             unlink();
         }));
     });
+};
+try {
+    const failCi = isTrue(core.getInput('fail_ci_if_error'));
+    const binaryPath = core.getInput('binary');
+    const verbose = isTrue(core.getInput('verbose'));
+    if (binaryPath) {
+        invokeCLI(binaryPath, failCi, verbose).catch((err) => {
+            setFailure(`Codecov: Encountered an unexpected error ${err.message}`, failCi);
+        });
+    }
+    else {
+        downloadAndInvokeCLI(failCi, verbose);
+    }
 }
 catch (err) {
     setFailure(`Codecov: Encountered an unexpected error ${err.message}`, failCi);
