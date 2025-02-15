@@ -9,6 +9,17 @@ const PLATFORMS = [
   'alpine-arm64',
 ];
 
+const isTrue = (variable) => {
+  const lowercase = variable.toLowerCase();
+  return (
+    lowercase === '1' ||
+    lowercase === 't' ||
+    lowercase === 'true' ||
+    lowercase === 'y' ||
+    lowercase === 'yes'
+  );
+};
+
 const setFailure = (message: string, failCi: boolean): void => {
   failCi ? core.setFailed(message) : core.warning(message);
   if (failCi) {
@@ -66,6 +77,7 @@ const getCommand = (
 
 export {
   PLATFORMS,
+  isTrue,
   getBaseUrl,
   getPlatform,
   getUploaderName,
