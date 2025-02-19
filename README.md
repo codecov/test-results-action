@@ -1,3 +1,51 @@
+> :warning: **This action does not replace [codecov-action](https://github.com/codecov/codecov-action)**: You must include both actions if you want to upload both coverage and test results. See the quickstart section below for an example that uploads both coverage and test results.
+
+## Quickstart
+
+```yaml
+name: Example workflow for Codecov
+on: [push]
+jobs:
+  run:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: '3.10'
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python
+      uses: actions/setup-python@master
+      with:
+        python-version: 3.10
+    - name: Generate coverage and test result report
+      run: |
+        pip install pytest
+        pip install pytest-cov
+        pytest --cov=./ --cov-report=xml --junitxml=./junit.xml
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        files: ./junit.xml,!./cache
+        flags: python3.10
+        name: codecov-umbrella-test-results
+        token: ${{ secrets.CODECOV_TOKEN }}
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        directory: ./coverage/reports/
+        env_vars: OS,PYTHON
+        fail_ci_if_error: true
+        files: ./coverage1.xml,./coverage2.xml,!./cache
+        flags: unittests
+        name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
+```
+
 ## Usage
 
 Currently, the Action will identify linux, macos, and windows runners. However, the Action may misidentify other architectures. The OS can be specified as
@@ -74,49 +122,3 @@ Codecov's Action supports inputs from the user. These inputs, along with their d
 | `verbose` | Specify whether the Codecov output should be verbose | Optional 
 | `version` | Specify which version of the Codecov CLI should be used. Defaults to `latest` | Optional 
 | `working-directory` | Directory in which to execute codecov.sh | Optional 
-
-### Example `workflow.yml` with Codecov Action
-
-```yaml
-name: Example workflow for Codecov
-on: [push]
-jobs:
-  run:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: '3.10'
-    steps:
-    - uses: actions/checkout@master
-    - name: Setup Python
-      uses: actions/setup-python@master
-      with:
-        python-version: 3.10
-    - name: Generate coverage and test result report
-      run: |
-        pip install pytest
-        pip install pytest-cov
-        pytest --cov=./ --cov-report=xml --junitxml=./junit.xml
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
-      with:
-        files: ./junit.xml,!./cache
-        flags: python3.10
-        name: codecov-umbrella-test-results
-        token: ${{ secrets.CODECOV_TOKEN }}
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        directory: ./coverage/reports/
-        env_vars: OS,PYTHON
-        fail_ci_if_error: true
-        files: ./coverage1.xml,./coverage2.xml,!./cache
-        flags: unittests
-        name: codecov-umbrella
-        token: ${{ secrets.CODECOV_TOKEN }}
-        verbose: true
-```
