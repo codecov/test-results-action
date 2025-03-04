@@ -27,7 +27,7 @@ const invokeCLI = async (
     verbose: boolean,
 ) => {
   const {generalArgs, uploadCommand, uploadExecArgs, executionEnvironment} =
-      buildExecutionOptions(failCi, verbose);
+    await buildExecutionOptions(failCi, verbose);
 
   const doUploadTestResults = async () => {
     await exec.exec(
