@@ -32244,12 +32244,16 @@ const buildUploadArgs = (token, envVars, failCi) => {
     }
     if (files) {
         files.split(',').map((f) => f.trim()).forEach((f) => {
-            uploadExecArgs.push('-f', `${f}`);
+            if (f) {
+                uploadExecArgs.push('-f', `${f}`);
+            }
         });
     }
     if (flags) {
         flags.split(',').map((f) => f.trim()).forEach((f) => {
-            uploadExecArgs.push('-F', `${f}`);
+            if (f) {
+                uploadExecArgs.push('-F', `${f}`);
+            }
         });
     }
     if (handleNoReportsFound) {
