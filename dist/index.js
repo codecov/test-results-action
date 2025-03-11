@@ -32148,6 +32148,16 @@ const getCommand = (filename, generalArgs, command) => {
 
 ;// CONCATENATED MODULE: ./src/buildExec.ts
 /* eslint-disable  @typescript-eslint/no-explicit-any */
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
 
 
 
@@ -32324,15 +32334,33 @@ const buildExecutionEnvironment = (token, envVars) => {
     }
     return uploadOptions;
 };
-const buildExecutionOptions = (failCi, verbose) => {
-    const token = core.getInput('token');
+const getToken = () => __awaiter(void 0, void 0, void 0, function* () {
+    let token = core.getInput('token');
+    let url = core.getInput('url');
+    const useOIDC = isTrue(core.getInput('use_oidc'));
+    if (useOIDC) {
+        if (!url) {
+            url = 'https://codecov.io';
+        }
+        try {
+            token = yield core.getIDToken(url);
+            return Promise.resolve(token);
+        }
+        catch (err) {
+            setFailure(`Codecov: Failed to get OIDC token with url: ${url}. ${err.message}`, true);
+        }
+    }
+    return token;
+});
+const buildExecutionOptions = (failCi, verbose) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = yield getToken();
     const envVars = core.getInput('env_vars');
     const cleanedEnvVars = cleanEnvVars(envVars);
     const generalArgs = buildGeneralArgs(verbose);
     const { uploadExecArgs, uploadCommand } = buildUploadArgs(token, cleanedEnvVars, failCi);
     const executionEnvironment = buildExecutionEnvironment(token, cleanedEnvVars);
     return { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment };
-};
+});
 
 
 ;// CONCATENATED MODULE: external "node:child_process"
@@ -32346,7 +32374,7 @@ const external_node_path_namespaceObject = require("node:path");
 // EXTERNAL MODULE: ./node_modules/undici/index.js
 var undici = __nccwpck_require__(1773);
 ;// CONCATENATED MODULE: ./src/validate.ts
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var validate_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -32362,7 +32390,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 
-const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 0, void 0, void 0, function* () {
+const verify = (filename, platform, version, verbose, failCi) => validate_awaiter(void 0, void 0, void 0, function* () {
     try {
         const uploaderName = getUploaderName(platform);
         // Get SHASUM and SHASUM signature files
@@ -32379,8 +32407,8 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
             console.log(`Received SHA256SUM signature ${shaSig}`);
         }
         yield external_node_fs_namespaceObject.writeFileSync(external_node_path_namespaceObject.join(__dirname, `${uploaderName}.SHA256SUM.sig`), shaSig);
-        const validateSha = () => __awaiter(void 0, void 0, void 0, function* () {
-            const calculateHash = (filename) => __awaiter(void 0, void 0, void 0, function* () {
+        const validateSha = () => validate_awaiter(void 0, void 0, void 0, function* () {
+            const calculateHash = (filename) => validate_awaiter(void 0, void 0, void 0, function* () {
                 const stream = external_node_fs_namespaceObject.createReadStream(filename);
                 const uploaderSha = external_node_crypto_namespaceObject.createHash(`sha256`);
                 stream.pipe(uploaderSha);
@@ -32398,7 +32426,7 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
                     `uploader hash: ${hash}, public hash: ${shasum}`, failCi);
             }
         });
-        const verifySignature = () => __awaiter(void 0, void 0, void 0, function* () {
+        const verifySignature = () => validate_awaiter(void 0, void 0, void 0, function* () {
             const args = [
                 '--logger-fd',
                 '1',
@@ -32413,7 +32441,7 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
                 setFailure(`Codecov: Error verifying gpg signature: ${err.message}`, failCi);
             }
         });
-        const importKey = () => __awaiter(void 0, void 0, void 0, function* () {
+        const importKey = () => validate_awaiter(void 0, void 0, void 0, function* () {
             const args = [
                 '--logger-fd',
                 '1',
@@ -32488,7 +32516,7 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 let failCi;
 const invokeCLI = (filename, failCi, verbose) => src_awaiter(void 0, void 0, void 0, function* () {
-    const { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment } = buildExecutionOptions(failCi, verbose);
+    const { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment } = yield buildExecutionOptions(failCi, verbose);
     const doUploadTestResults = () => src_awaiter(void 0, void 0, void 0, function* () {
         yield exec.exec(getCommand(filename, generalArgs, uploadCommand).join(' '), uploadExecArgs, executionEnvironment);
     });

@@ -8,6 +8,9 @@ import {
   getPlatform,
   getUploaderName,
 } from './helpers';
+import {
+  setFailure,
+} from './helpers';
 
 
 const context = github.context;
@@ -207,8 +210,29 @@ const buildExecutionEnvironment = (token: string, envVars) => {
   return uploadOptions;
 };
 
-const buildExecutionOptions = (failCi: boolean, verbose: boolean) => {
-  const token = core.getInput('token');
+const getToken = async (): Promise<string> => {
+  let token = core.getInput('token');
+  let url = core.getInput('url');
+  const useOIDC = isTrue(core.getInput('use_oidc'));
+  if (useOIDC) {
+    if (!url) {
+      url = 'https://codecov.io';
+    }
+    try {
+      token = await core.getIDToken(url);
+      return Promise.resolve(token);
+    } catch (err) {
+      setFailure(
+          `Codecov: Failed to get OIDC token with url: ${url}. ${err.message}`,
+          true,
+      );
+    }
+  }
+  return token;
+};
+
+const buildExecutionOptions = async (failCi: boolean, verbose: boolean) => {
+  const token = await getToken();
   const envVars = core.getInput('env_vars');
   const cleanedEnvVars = cleanEnvVars(envVars);
 

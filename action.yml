@@ -77,6 +77,9 @@ inputs:
   url:
     description: 'Specify the base url to upload (Enterprise use)'
     required: false
+  use_oidc:
+    description: 'Use OIDC to authenticate with Codecov'
+    required: false
   verbose:
     description: 'Specify whether the Codecov output should be verbose'
     required: false

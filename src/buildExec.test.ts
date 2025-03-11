@@ -62,11 +62,11 @@ describe('setting up cli invocation', () => {
     expect(uploaderVersion).toEqual('0.1.2');
   });
 
-  test('execution options', () => {
+  test('execution options', async () => {
     const failCi = true;
     const verbose = false;
     const {generalArgs, uploadCommand, uploadExecArgs, executionEnvironment} =
-        buildExecutionOptions(failCi, verbose);
+      await buildExecutionOptions(failCi, verbose);
 
     expect(uploadCommand).toEqual('do-upload');
 
