@@ -117,12 +117,16 @@ const buildUploadArgs = (token: string, envVars, failCi: boolean) => {
   }
   if (files) {
     files.split(',').map((f) => f.trim()).forEach((f) => {
-      uploadExecArgs.push('-f', `${f}`);
+      if (f) {
+        uploadExecArgs.push('-f', `${f}`);
+      }
     });
   }
   if (flags) {
     flags.split(',').map((f) => f.trim()).forEach((f) => {
-      uploadExecArgs.push('-F', `${f}`);
+      if (f) {
+        uploadExecArgs.push('-F', `${f}`);
+      }
     });
   }
   if (handleNoReportsFound) {
@@ -210,7 +214,7 @@ const buildExecutionOptions = (failCi: boolean, verbose: boolean) => {
 
   const generalArgs = buildGeneralArgs(verbose);
   const {uploadExecArgs, uploadCommand} =
-      buildUploadArgs(token, cleanedEnvVars, failCi);
+    buildUploadArgs(token, cleanedEnvVars, failCi);
   const executionEnvironment = buildExecutionEnvironment(token, cleanedEnvVars);
 
   return {generalArgs, uploadCommand, uploadExecArgs, executionEnvironment};

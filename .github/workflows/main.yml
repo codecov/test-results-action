@@ -20,7 +20,7 @@ jobs:
         uses: ./
         with:
           fail_ci_if_error: true
-          files: ./demo/calculator/junit.xml
+          files: ./demo/calculator/junit.xml,
           flags: ${{ matrix.os }}
           verbose: true
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
