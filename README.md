@@ -1,3 +1,7 @@
+## Overview
+
+Codecov Test Result Action uploads Junit test result reports to Codecov as part of [Codecov's Test Analytics](https://docs.codecov.com/docs/test-analytics) feature. Your repo must belong to an org currently using Codecov. [Codecov](https://about.codecov.io/pricing/) is free for open source usage.
+
 ## Usage
 
 Currently, the Action will identify linux, macos, and windows runners. However, the Action may misidentify other architectures. The OS can be specified as
