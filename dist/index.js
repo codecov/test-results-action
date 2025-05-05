@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 5241:
+/***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -135,7 +135,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
-const command_1 = __nccwpck_require__(5241);
+const command_1 = __nccwpck_require__(7351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
@@ -1143,7 +1143,7 @@ const os = __importStar(__nccwpck_require__(2037));
 const events = __importStar(__nccwpck_require__(2361));
 const child = __importStar(__nccwpck_require__(2081));
 const path = __importStar(__nccwpck_require__(1017));
-const io = __importStar(__nccwpck_require__(7351));
+const io = __importStar(__nccwpck_require__(7436));
 const ioUtil = __importStar(__nccwpck_require__(1962));
 const timers_1 = __nccwpck_require__(9512);
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -3012,7 +3012,7 @@ exports.getCmdPath = getCmdPath;
 
 /***/ }),
 
-/***/ 7351:
+/***/ 7436:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -32078,173 +32078,12 @@ var external_fs_ = __nccwpck_require__(7147);
 var external_https_ = __nccwpck_require__(5687);
 // EXTERNAL MODULE: external "path"
 var external_path_ = __nccwpck_require__(1017);
-// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(1514);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(5438);
-;// CONCATENATED MODULE: ./src/buildExec.ts
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-
-
-const context = github.context;
-const isTrue = (variable) => {
-    const lowercase = variable.toLowerCase();
-    return (lowercase === '1' ||
-        lowercase === 't' ||
-        lowercase === 'true' ||
-        lowercase === 'y' ||
-        lowercase === 'yes');
-};
-const buildGeneralExec = () => {
-    const codecovYmlPath = core.getInput('codecov_yml_path');
-    const url = core.getInput('url');
-    const verbose = isTrue(core.getInput('verbose'));
-    const args = [];
-    if (codecovYmlPath) {
-        args.push('--codecov-yml-path', `${codecovYmlPath}`);
-    }
-    if (url) {
-        args.push('--enterprise-url', `${url}`);
-    }
-    if (verbose) {
-        args.push('-v');
-    }
-    return { args, verbose };
-};
-const buildUploadExec = () => {
-    const disableSearch = isTrue(core.getInput('disable_search'));
-    const dryRun = isTrue(core.getInput('dry_run'));
-    const envVars = core.getInput('env_vars');
-    const exclude = core.getInput('exclude');
-    const failCi = isTrue(core.getInput('fail_ci_if_error'));
-    const file = core.getInput('file');
-    const files = core.getInput('files');
-    const flags = core.getInput('flags');
-    const handleNoReportsFound = isTrue(core.getInput('handle_no_reports_found'));
-    const name = core.getInput('name');
-    const os = core.getInput('os');
-    const overrideBranch = core.getInput('override_branch');
-    const overrideBuild = core.getInput('override_build');
-    const overrideBuildUrl = core.getInput('override_build_url');
-    const overrideCommit = core.getInput('override_commit');
-    const overridePr = core.getInput('override_pr');
-    const reportCode = core.getInput('report_code');
-    const rootDir = core.getInput('root_dir');
-    const searchDir = core.getInput('directory');
-    const slug = core.getInput('slug');
-    const token = core.getInput('token');
-    let uploaderVersion = core.getInput('version');
-    const workingDir = core.getInput('working-directory');
-    const uploadExecArgs = [];
-    const uploadCommand = 'do-upload';
-    const uploadOptions = {};
-    uploadOptions.env = Object.assign(process.env, {
-        GITHUB_ACTION: process.env.GITHUB_ACTION,
-        GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
-        GITHUB_REF: process.env.GITHUB_REF,
-        GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
-        GITHUB_SHA: process.env.GITHUB_SHA,
-        GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
-    });
-    const envVarsArg = [];
-    for (const envVar of envVars.split(',')) {
-        const envVarClean = envVar.trim();
-        if (envVarClean) {
-            uploadOptions.env[envVarClean] = process.env[envVarClean];
-            envVarsArg.push(envVarClean);
-        }
-    }
-    if (token) {
-        uploadOptions.env.CODECOV_TOKEN = token;
-    }
-    if (disableSearch) {
-        uploadExecArgs.push('--disable-search');
-    }
-    if (dryRun) {
-        uploadExecArgs.push('-d');
-    }
-    if (envVarsArg.length) {
-        uploadExecArgs.push('-e', envVarsArg.join(','));
-    }
-    if (exclude) {
-        uploadExecArgs.push('--exclude', `${exclude}`);
-    }
-    if (failCi) {
-        uploadExecArgs.push('-Z');
-    }
-    if (file) {
-        uploadExecArgs.push('-f', `${file}`);
-    }
-    if (files) {
-        files.split(',').map((f) => f.trim()).forEach((f) => {
-            uploadExecArgs.push('-f', `${f}`);
-        });
-    }
-    if (flags) {
-        flags.split(',').map((f) => f.trim()).forEach((f) => {
-            uploadExecArgs.push('-F', `${f}`);
-        });
-    }
-    if (handleNoReportsFound) {
-        uploadExecArgs.push('--handle-no-reports-found');
-    }
-    if (name) {
-        uploadExecArgs.push('-n', `${name}`);
-    }
-    if (overrideBranch) {
-        uploadExecArgs.push('-B', `${overrideBranch}`);
-    }
-    if (overrideBuild) {
-        uploadExecArgs.push('-b', `${overrideBuild}`);
-    }
-    if (overrideBuildUrl) {
-        uploadExecArgs.push('--build-url', `${overrideBuildUrl}`);
-    }
-    if (overrideCommit) {
-        uploadExecArgs.push('-C', `${overrideCommit}`);
-    }
-    else if (`${context.eventName}` == 'pull_request' ||
-        `${context.eventName}` == 'pull_request_target') {
-        uploadExecArgs.push('-C', `${context.payload.pull_request.head.sha}`);
-    }
-    if (overridePr) {
-        uploadExecArgs.push('-P', `${overridePr}`);
-    }
-    else if (`${context.eventName}` == 'pull_request_target') {
-        uploadExecArgs.push('-P', `${context.payload.number}`);
-    }
-    if (reportCode) {
-        uploadExecArgs.push('--report-code', `${reportCode}`);
-    }
-    if (rootDir) {
-        uploadExecArgs.push('--network-root-folder', `${rootDir}`);
-    }
-    if (searchDir) {
-        uploadExecArgs.push('-s', `${searchDir}`);
-    }
-    if (slug) {
-        uploadExecArgs.push('-r', `${slug}`);
-    }
-    if (workingDir) {
-        uploadOptions.cwd = workingDir;
-    }
-    if (uploaderVersion == '') {
-        uploaderVersion = 'latest';
-    }
-    uploadExecArgs.push('--report-type', 'test_results');
-    return {
-        uploadExecArgs,
-        uploadOptions,
-        failCi,
-        os,
-        uploaderVersion,
-        uploadCommand,
-    };
-};
-
-
 ;// CONCATENATED MODULE: ./src/helpers.ts
 
 const PLATFORMS = [
@@ -32255,6 +32094,14 @@ const PLATFORMS = [
     'linux-arm64',
     'alpine-arm64',
 ];
+const isTrue = (variable) => {
+    const lowercase = variable.toLowerCase();
+    return (lowercase === '1' ||
+        lowercase === 't' ||
+        lowercase === 'true' ||
+        lowercase === 'y' ||
+        lowercase === 'yes');
+};
 const setFailure = (message, failCi) => {
     failCi ? core.setFailed(message) : core.warning(message);
     if (failCi) {
@@ -32299,6 +32146,223 @@ const getCommand = (filename, generalArgs, command) => {
 };
 
 
+;// CONCATENATED MODULE: ./src/buildExec.ts
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
+
+
+
+const context = github.context;
+const cleanEnvVars = (envVars) => {
+    const cleanedVars = [];
+    for (const envVar of envVars.split(',')) {
+        const envVarClean = envVar.trim();
+        if (envVarClean) {
+            cleanedVars.push(envVarClean);
+        }
+    }
+    return cleanedVars;
+};
+const isPullRequestFromFork = () => {
+    core.info(`eventName: ${context.eventName}`);
+    if (!['pull_request', 'pull_request_target'].includes(context.eventName)) {
+        return false;
+    }
+    const baseLabel = context.payload.pull_request.base.label;
+    const headLabel = context.payload.pull_request.head.label;
+    core.info(`baseRef: ${baseLabel} | headRef: ${headLabel}`);
+    return baseLabel.split(':')[0] !== headLabel.split(':')[0];
+};
+const getOverrideBranch = (token) => {
+    let overrideBranch = core.getInput('override_branch');
+    if (!overrideBranch && !token && isPullRequestFromFork()) {
+        core.info('==> Fork detected, tokenless uploading used');
+        // backwards compatibility with certain versions of the CLI that expect this
+        process.env['TOKENLESS'] = context.payload.pull_request.head.label;
+        overrideBranch = context.payload.pull_request.head.label;
+    }
+    return overrideBranch;
+};
+const buildDownloadOptions = () => {
+    const os = core.getInput('os');
+    const platform = getPlatform(os);
+    const uploaderName = getUploaderName(platform);
+    const uploaderVersion = core.getInput('version') || 'latest';
+    return { platform, uploaderName, uploaderVersion };
+};
+const buildGeneralArgs = (verbose) => {
+    const codecovYmlPath = core.getInput('codecov_yml_path');
+    const url = core.getInput('url');
+    const args = [];
+    if (codecovYmlPath) {
+        args.push('--codecov-yml-path', `${codecovYmlPath}`);
+    }
+    if (url) {
+        args.push('--enterprise-url', `${url}`);
+    }
+    if (verbose) {
+        args.push('-v');
+    }
+    return args;
+};
+const buildUploadArgs = (token, envVars, failCi) => {
+    const disableSearch = isTrue(core.getInput('disable_search'));
+    const dryRun = isTrue(core.getInput('dry_run'));
+    const exclude = core.getInput('exclude');
+    const file = core.getInput('file');
+    const files = core.getInput('files');
+    const flags = core.getInput('flags');
+    const handleNoReportsFound = isTrue(core.getInput('handle_no_reports_found'));
+    const name = core.getInput('name');
+    const overrideBranch = getOverrideBranch(token);
+    const overrideBuild = core.getInput('override_build');
+    const overrideBuildUrl = core.getInput('override_build_url');
+    const overrideCommit = core.getInput('override_commit');
+    const overridePr = core.getInput('override_pr');
+    const reportCode = core.getInput('report_code');
+    const rootDir = core.getInput('root_dir');
+    const searchDir = core.getInput('directory');
+    const slug = core.getInput('slug');
+    const uploadExecArgs = [];
+    const uploadCommand = 'do-upload';
+    if (disableSearch) {
+        uploadExecArgs.push('--disable-search');
+    }
+    if (dryRun) {
+        uploadExecArgs.push('-d');
+    }
+    if (envVars.length) {
+        uploadExecArgs.push('-e', envVars.join(','));
+    }
+    if (exclude) {
+        uploadExecArgs.push('--exclude', `${exclude}`);
+    }
+    if (failCi) {
+        uploadExecArgs.push('-Z');
+    }
+    if (file) {
+        uploadExecArgs.push('-f', `${file}`);
+    }
+    if (files) {
+        files.split(',').map((f) => f.trim()).forEach((f) => {
+            if (f) {
+                uploadExecArgs.push('-f', `${f}`);
+            }
+        });
+    }
+    if (flags) {
+        flags.split(',').map((f) => f.trim()).forEach((f) => {
+            if (f) {
+                uploadExecArgs.push('-F', `${f}`);
+            }
+        });
+    }
+    if (handleNoReportsFound) {
+        uploadExecArgs.push('--handle-no-reports-found');
+    }
+    if (name) {
+        uploadExecArgs.push('-n', `${name}`);
+    }
+    if (overrideBranch) {
+        uploadExecArgs.push('-B', `${overrideBranch}`);
+    }
+    if (overrideBuild) {
+        uploadExecArgs.push('-b', `${overrideBuild}`);
+    }
+    if (overrideBuildUrl) {
+        uploadExecArgs.push('--build-url', `${overrideBuildUrl}`);
+    }
+    if (overrideCommit) {
+        uploadExecArgs.push('-C', `${overrideCommit}`);
+    }
+    else if (`${context.eventName}` == 'pull_request' ||
+        `${context.eventName}` == 'pull_request_target') {
+        uploadExecArgs.push('-C', `${context.payload.pull_request.head.sha}`);
+    }
+    if (overridePr) {
+        uploadExecArgs.push('-P', `${overridePr}`);
+    }
+    else if (`${context.eventName}` == 'pull_request_target') {
+        uploadExecArgs.push('-P', `${context.payload.number}`);
+    }
+    if (reportCode) {
+        uploadExecArgs.push('--report-code', `${reportCode}`);
+    }
+    if (rootDir) {
+        uploadExecArgs.push('--network-root-folder', `${rootDir}`);
+    }
+    if (searchDir) {
+        uploadExecArgs.push('-s', `${searchDir}`);
+    }
+    if (slug) {
+        uploadExecArgs.push('-r', `${slug}`);
+    }
+    uploadExecArgs.push('--report-type', 'test_results');
+    return {
+        uploadExecArgs,
+        uploadCommand,
+    };
+};
+const buildExecutionEnvironment = (token, envVars) => {
+    const uploadOptions = {};
+    uploadOptions.env = Object.assign(process.env, {
+        GITHUB_ACTION: process.env.GITHUB_ACTION,
+        GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
+        GITHUB_REF: process.env.GITHUB_REF,
+        GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+        GITHUB_SHA: process.env.GITHUB_SHA,
+        GITHUB_HEAD_REF: process.env.GITHUB_HEAD_REF || '',
+    });
+    for (const envVar of envVars) {
+        uploadOptions.env[envVar] = process.env[envVar];
+    }
+    if (token) {
+        uploadOptions.env.CODECOV_TOKEN = token;
+    }
+    const workingDir = core.getInput('working-directory');
+    if (workingDir) {
+        uploadOptions.cwd = workingDir;
+    }
+    return uploadOptions;
+};
+const getToken = () => __awaiter(void 0, void 0, void 0, function* () {
+    let token = core.getInput('token');
+    let url = core.getInput('url');
+    const useOIDC = isTrue(core.getInput('use_oidc'));
+    if (useOIDC) {
+        if (!url) {
+            url = 'https://codecov.io';
+        }
+        try {
+            token = yield core.getIDToken(url);
+            return Promise.resolve(token);
+        }
+        catch (err) {
+            setFailure(`Codecov: Failed to get OIDC token with url: ${url}. ${err.message}`, true);
+        }
+    }
+    return token;
+});
+const buildExecutionOptions = (failCi, verbose) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = yield getToken();
+    const envVars = core.getInput('env_vars');
+    const cleanedEnvVars = cleanEnvVars(envVars);
+    const generalArgs = buildGeneralArgs(verbose);
+    const { uploadExecArgs, uploadCommand } = buildUploadArgs(token, cleanedEnvVars, failCi);
+    const executionEnvironment = buildExecutionEnvironment(token, cleanedEnvVars);
+    return { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment };
+});
+
+
 ;// CONCATENATED MODULE: external "node:child_process"
 const external_node_child_process_namespaceObject = require("node:child_process");
 ;// CONCATENATED MODULE: external "node:crypto"
@@ -32310,7 +32374,7 @@ const external_node_path_namespaceObject = require("node:path");
 // EXTERNAL MODULE: ./node_modules/undici/index.js
 var undici = __nccwpck_require__(1773);
 ;// CONCATENATED MODULE: ./src/validate.ts
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var validate_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -32326,7 +32390,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 
-const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 0, void 0, void 0, function* () {
+const verify = (filename, platform, version, verbose, failCi) => validate_awaiter(void 0, void 0, void 0, function* () {
     try {
         const uploaderName = getUploaderName(platform);
         // Get SHASUM and SHASUM signature files
@@ -32343,8 +32407,8 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
             console.log(`Received SHA256SUM signature ${shaSig}`);
         }
         yield external_node_fs_namespaceObject.writeFileSync(external_node_path_namespaceObject.join(__dirname, `${uploaderName}.SHA256SUM.sig`), shaSig);
-        const validateSha = () => __awaiter(void 0, void 0, void 0, function* () {
-            const calculateHash = (filename) => __awaiter(void 0, void 0, void 0, function* () {
+        const validateSha = () => validate_awaiter(void 0, void 0, void 0, function* () {
+            const calculateHash = (filename) => validate_awaiter(void 0, void 0, void 0, function* () {
                 const stream = external_node_fs_namespaceObject.createReadStream(filename);
                 const uploaderSha = external_node_crypto_namespaceObject.createHash(`sha256`);
                 stream.pipe(uploaderSha);
@@ -32362,7 +32426,7 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
                     `uploader hash: ${hash}, public hash: ${shasum}`, failCi);
             }
         });
-        const verifySignature = () => __awaiter(void 0, void 0, void 0, function* () {
+        const verifySignature = () => validate_awaiter(void 0, void 0, void 0, function* () {
             const args = [
                 '--logger-fd',
                 '1',
@@ -32377,7 +32441,7 @@ const verify = (filename, platform, version, verbose, failCi) => __awaiter(void 
                 setFailure(`Codecov: Error verifying gpg signature: ${err.message}`, failCi);
             }
         });
-        const importKey = () => __awaiter(void 0, void 0, void 0, function* () {
+        const importKey = () => validate_awaiter(void 0, void 0, void 0, function* () {
             const args = [
                 '--logger-fd',
                 '1',
@@ -32419,7 +32483,7 @@ const versionInfo = (platform, version) => version_awaiter(void 0, void 0, void 
         core.info(`==> Running version ${version}`);
     }
     try {
-        const metadataRes = yield (0,undici.request)(`https://cli.codecov.io/${platform}/latest`, {
+        const metadataRes = yield (0,undici.request)(`https://cli.codecov.io/api/${platform}/latest`, {
             headers: { 'Accept': 'application/json' },
         });
         const metadata = yield metadataRes.body.json();
@@ -32449,14 +32513,27 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 
 
+
 let failCi;
-try {
-    const { uploadExecArgs, uploadOptions, failCi, os, uploaderVersion, uploadCommand, } = buildUploadExec();
-    const { args, verbose } = buildGeneralExec();
-    const platform = getPlatform(os);
-    const filename = external_path_.join(__dirname, getUploaderName(platform));
+const invokeCLI = (filename, failCi, verbose) => src_awaiter(void 0, void 0, void 0, function* () {
+    const { generalArgs, uploadCommand, uploadExecArgs, executionEnvironment } = yield buildExecutionOptions(failCi, verbose);
+    const doUploadTestResults = () => src_awaiter(void 0, void 0, void 0, function* () {
+        yield exec.exec(getCommand(filename, generalArgs, uploadCommand).join(' '), uploadExecArgs, executionEnvironment);
+    });
+    const runCmd = (fn, fnName) => src_awaiter(void 0, void 0, void 0, function* () {
+        yield fn().catch((err) => {
+            setFailure(`Codecov: Failed to properly ${fnName}: ${err.message}`, failCi);
+        });
+    });
+    const runCommands = () => src_awaiter(void 0, void 0, void 0, function* () {
+        yield runCmd(doUploadTestResults, 'upload report');
+    });
+    yield runCommands();
+});
+const downloadAndInvokeCLI = (failCi, verbose) => {
+    const { platform, uploaderName, uploaderVersion } = buildDownloadOptions();
+    const filename = external_path_.join(__dirname, uploaderName);
     external_https_.get(getBaseUrl(platform, uploaderVersion), (res) => {
-        // Image will be stored at this path
         const filePath = external_fs_.createWriteStream(filename);
         res.pipe(filePath);
         filePath
@@ -32474,22 +32551,23 @@ try {
                     }
                 });
             };
-            const doUploadTestResults = () => src_awaiter(void 0, void 0, void 0, function* () {
-                yield exec.exec(getCommand(filename, args, uploadCommand).join(' '), uploadExecArgs, uploadOptions);
-            });
-            const runCmd = (fn, fnName) => src_awaiter(void 0, void 0, void 0, function* () {
-                yield fn().catch((err) => {
-                    setFailure(`Codecov: 
-                        Failed to properly ${fnName}: ${err.message}`, failCi);
-                });
-            });
-            const runCommands = () => src_awaiter(void 0, void 0, void 0, function* () {
-                yield runCmd(doUploadTestResults, 'upload report');
-            });
-            yield runCommands();
+            yield invokeCLI(filename, failCi, verbose);
             unlink();
         }));
     });
+};
+try {
+    const failCi = isTrue(core.getInput('fail_ci_if_error'));
+    const binaryPath = core.getInput('binary');
+    const verbose = isTrue(core.getInput('verbose'));
+    if (binaryPath) {
+        invokeCLI(binaryPath, failCi, verbose).catch((err) => {
+            setFailure(`Codecov: Encountered an unexpected error ${err.message}`, failCi);
+        });
+    }
+    else {
+        downloadAndInvokeCLI(failCi, verbose);
+    }
 }
 catch (err) {
     setFailure(`Codecov: Encountered an unexpected error ${err.message}`, failCi);

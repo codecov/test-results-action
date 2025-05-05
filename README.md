@@ -13,7 +13,7 @@ Inside your `.github/workflows/workflow.yml` file:
 ```yaml
 steps:
 - uses: actions/checkout@master
-- uses: codecov/test-results-action@v0
+- uses: codecov/test-results-action@v1
   with:
     fail_ci_if_error: true # optional (default = false)
     files: ./junit1.xml,./junit2.xml # optional
@@ -28,7 +28,7 @@ The Codecov token can also be passed in via environment variables:
 ```yaml
 steps:
 - uses: actions/checkout@master
-- uses: codecov/test-results-action@v0
+- uses: codecov/test-results-action@v1
   with:
     fail_ci_if_error: true # optional (default = false)
     files: ./junit1.xml,./junit2.xml # optional
@@ -38,7 +38,23 @@ steps:
   env:
     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 ```
->**Note**: This assumes that you've set your Codecov token inside *Settings > Secrets* as `CODECOV_TOKEN`. If not, you can [get an upload token](https://docs.codecov.io/docs/frequently-asked-questions#section-where-is-the-repository-upload-token-found-) for your specific repo on [codecov.io](https://www.codecov.io). Keep in mind that secrets are *not* available to forks of repositories.
+> [!IMPORTANT]
+> This assumes that you've set your Codecov token inside *Settings > Secrets* as `CODECOV_TOKEN`. If not, you can [get an upload token](https://docs.codecov.io/docs/frequently-asked-questions#section-where-is-the-repository-upload-token-found-) for your specific repo on [codecov.io](https://www.codecov.io).
+> Keep in mind that secrets are *not* available to forks of repositories.
+> View more information on tokenless uploads [here](https://docs.codecov.com/docs/codecov-tokens#uploading-without-a-token).
+
+> [!NOTE]
+> If you are using OIDC, you will need to set the `use_oidc` input to `true`, and make sure to add the following to your workflow file:
+>  ```yaml
+>  permissions:
+>    id-token: write
+>    contents: read
+>  ...
+>  steps:
+>  - uses: codecov/test-results-action@v1
+>    with:
+>      use_oidc: true
+>  ```
 
 ## Arguments
 
@@ -46,33 +62,35 @@ Codecov's Action supports inputs from the user. These inputs, along with their d
 
 | Input  | Description | Required |
 | :---       |     :---     |    :---:   |
-| `token` | Repository Codecov token. Used to authorize report uploads | *Required 
-| `codecov_yml_path` | Specify the path to the Codecov YML | Optional 
-| `commit_parent` | Override to specify the parent commit SHA | Optional 
-| `directory` | Directory to search for test result reports. | Optional 
-| `disable_search` | Disable search for test result files. This is helpful when specifying what files you want to upload with the --file option. | Optional 
-| `dry_run` | Don't upload files to Codecov | Optional 
-| `env_vars` | Environment variables to tag the upload with (e.g. PYTHON \| OS,PYTHON) | Optional 
-| `exclude` | Folders to exclude from search | Optional 
-| `fail_ci_if_error` | Specify whether or not CI build should fail if Codecov runs into an error during upload | Optional 
+| `token` | Repository Codecov token. Used to authorize report uploads | *Required
+| `binary` | The file location of a pre-downloaded version of the CLI. If specified, integrity checking will be bypassed. | Optional
+| `codecov_yml_path` | Specify the path to the Codecov YML | Optional
+| `commit_parent` | Override to specify the parent commit SHA | Optional
+| `directory` | Directory to search for test result reports. | Optional
+| `disable_search` | Disable search for test result files. This is helpful when specifying what files you want to upload with the --file option. | Optional
+| `dry_run` | Don't upload files to Codecov | Optional
+| `env_vars` | Environment variables to tag the upload with (e.g. PYTHON \| OS,PYTHON) | Optional
+| `exclude` | Folders to exclude from search | Optional
+| `fail_ci_if_error` | Specify whether or not CI build should fail if Codecov runs into an error during upload | Optional
 | `file` | Path to test result file to upload. Also accepts a wildcard pattern like `PREFIX*.xml`. | Optional 
 | `files` | Comma-separated list of files to upload. Also accepts wildcard patterns like `PREFIX*.xml`. | Optional 
-| `flags` | Flag upload to group test results (e.g. py3.10 | py3.11 | py3.12) | Optional 
-| `handle_no_reports_found` | Raise no exceptions when no test result reports found | Optional 
-| `name` | User defined upload name. Visible in Codecov UI | Optional 
-| `os` | Override the assumed OS. Options are linux \| macos \| windows \| . | Optional 
-| `override_branch` | Specify the branch name | Optional 
-| `override_build` | Specify the build number | Optional 
-| `override_build_url` | The URL of the build where this is running | Optional 
-| `override_commit` | Specify the commit SHA | Optional 
-| `override_pr` | Specify the pull request number | Optional 
-| `report_code` | The code of the report. If unsure, do not include | Optional 
-| `root_dir` | Used when not in git/hg project to identify project root directory | Optional 
-| `slug` | Specify the slug manually (Enterprise use) | Optional 
-| `url` | Specify the base url to upload (Enterprise use) | Optional 
-| `verbose` | Specify whether the Codecov output should be verbose | Optional 
-| `version` | Specify which version of the Codecov CLI should be used. Defaults to `latest` | Optional 
-| `working-directory` | Directory in which to execute codecov.sh | Optional 
+| `flags` | Flag upload to group test results (e.g. py3.10 | py3.11 | py3.12) | Optional
+| `handle_no_reports_found` | Raise no exceptions when no test result reports found | Optional
+| `name` | User defined upload name. Visible in Codecov UI | Optional
+| `os` | Override the assumed OS. Options are linux \| macos \| windows \| . | Optional
+| `override_branch` | Specify the branch name | Optional
+| `override_build` | Specify the build number | Optional
+| `override_build_url` | The URL of the build where this is running | Optional
+| `override_commit` | Specify the commit SHA | Optional
+| `override_pr` | Specify the pull request number | Optional
+| `report_code` | The code of the report. If unsure, do not include | Optional
+| `root_dir` | Used when not in git/hg project to identify project root directory | Optional
+| `slug` | Specify the slug manually (Enterprise use) | Optional
+| `url` | Specify the base url to upload (Enterprise use) | Optional
+| `use_oidc` | Use OIDC to authenticate with Codecov | Optional
+| `verbose` | Specify whether the Codecov output should be verbose | Optional
+| `version` | Specify which version of the Codecov CLI should be used. Defaults to `latest` | Optional
+| `working-directory` | Directory in which to execute codecov.sh | Optional
 
 ### Example `workflow.yml` with Codecov Action
 
