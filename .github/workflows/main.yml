@@ -27,6 +27,7 @@ jobs:
           verbose: true
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
       - name: Upload test results to Codecov (calculator) (oidc)
+        if: ${{ !github.event.pull_request.head.repo.fork && github.repository_owner == 'codecov' }}
         uses: ./
         with:
           use_oidc: true
