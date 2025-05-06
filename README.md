@@ -77,7 +77,7 @@ Codecov's Action supports inputs from the user. These inputs, along with their d
 | `flags` | Flag upload to group test results (e.g. py3.10 | py3.11 | py3.12) | Optional
 | `handle_no_reports_found` | Raise no exceptions when no test result reports found | Optional
 | `name` | User defined upload name. Visible in Codecov UI | Optional
-| `os` | Override the assumed OS. Options are linux \| macos \| windows \| . | Optional
+| `os` | Override the assumed OS. Options are linux \| macos \| windows \| \| linux-arm64 \| alpine \| alpine-arm64 . | Optional
 | `override_branch` | Specify the branch name | Optional
 | `override_build` | Specify the build number | Optional
 | `override_build_url` | The URL of the build where this is running | Optional
