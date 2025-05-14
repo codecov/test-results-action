@@ -32344,7 +32344,8 @@ const getToken = () => __awaiter(void 0, void 0, void 0, function* () {
     let token = core.getInput('token');
     let url = core.getInput('url');
     const useOIDC = isTrue(core.getInput('use_oidc'));
-    if (useOIDC) {
+    const isFromFork = isPullRequestFromFork();
+    if (useOIDC && !isFromFork) {
         if (!url) {
             url = 'https://codecov.io';
         }
