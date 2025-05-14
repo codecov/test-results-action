@@ -49,7 +49,15 @@ const getPlatform = (os?: string): string => {
     return os;
   }
 
-  const platform = process.env.RUNNER_OS?.toLowerCase();
+  let platform = process.env.RUNNER_OS?.toLowerCase();
+
+  // handle arm64
+  const arch = process.env.RUNNER_ARCH?.toLowerCase();
+  // macos version is universal, so we don't need to add -arm64
+  if (arch === 'arm64' && platform !== 'macos') {
+    platform += '-arm64';
+  }
+
   if (isValidPlatform(platform)) {
     core.info(`==> ${platform} OS detected`);
     return platform;

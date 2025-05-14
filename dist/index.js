@@ -32123,12 +32123,18 @@ const isWindows = (platform) => {
     return platform === 'windows';
 };
 const getPlatform = (os) => {
-    var _a;
+    var _a, _b;
     if (isValidPlatform(os)) {
         core.info(`==> ${os} OS provided`);
         return os;
     }
-    const platform = (_a = process.env.RUNNER_OS) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+    let platform = (_a = process.env.RUNNER_OS) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+    // handle arm64
+    const arch = (_b = process.env.RUNNER_ARCH) === null || _b === void 0 ? void 0 : _b.toLowerCase();
+    // macos version is universal, so we don't need to add -arm64
+    if (arch === 'arm64' && platform !== 'macos') {
+        platform += '-arm64';
+    }
     if (isValidPlatform(platform)) {
         core.info(`==> ${platform} OS detected`);
         return platform;
