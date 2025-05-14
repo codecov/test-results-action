@@ -32488,15 +32488,17 @@ const versionInfo = (platform, version) => version_awaiter(void 0, void 0, void 
     if (version) {
         core.info(`==> Running version ${version}`);
     }
-    try {
-        const metadataRes = yield (0,undici.request)(`https://cli.codecov.io/api/${platform}/latest`, {
-            headers: { 'Accept': 'application/json' },
-        });
-        const metadata = yield metadataRes.body.json();
-        core.info(`==> Running version ${metadata['version']}`);
-    }
-    catch (err) {
-        core.info(`Could not pull latest version information: ${err}`);
+    else {
+        try {
+            const metadataRes = yield (0,undici.request)(`https://cli.codecov.io/api/${platform}/latest`, {
+                headers: { Accept: 'application/json' },
+            });
+            const metadata = yield metadataRes.body.json();
+            core.info(`==> Running version ${metadata['version']}`);
+        }
+        catch (err) {
+            core.info(`Could not pull latest version information: ${err}`);
+        }
     }
 });
 /* harmony default export */ const version = (versionInfo);
