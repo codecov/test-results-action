@@ -74,7 +74,7 @@ Codecov's Action supports inputs from the user. These inputs, along with their d
 | `fail_ci_if_error` | Specify whether or not CI build should fail if Codecov runs into an error during upload | Optional
 | `file` | Path to test result file to upload | Optional
 | `files` | Comma-separated list of files to upload | Optional
-| `flags` | Flag upload to group test results (e.g. py3.10 | py3.11 | py3.12) | Optional
+| `flags` | Flag upload to group test results (e.g. py3.10 \| py3.11 \| py3.12) | Optional
 | `handle_no_reports_found` | Raise no exceptions when no test result reports found | Optional
 | `name` | User defined upload name. Visible in Codecov UI | Optional
 | `os` | Override the assumed OS. Options are linux \| macos \| windows \| \| linux-arm64 \| alpine \| alpine-arm64 . | Optional
