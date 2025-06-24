@@ -3,12 +3,14 @@ on: [pull_request]
 
 jobs:
   run:
-    permissions: read-all
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest, ubuntu-24.04-arm]
     steps:
       - name: Checkout
         uses: actions/checkout@v4.1.1
@@ -20,10 +22,18 @@ jobs:
         uses: ./
         with:
           fail_ci_if_error: true
-          files: ./demo/calculator/junit.xml
+          files: ./demo/calculator/junit.xml,
           flags: ${{ matrix.os }}
           verbose: true
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
+      - name: Upload test results to Codecov (calculator) (oidc)
+        uses: ./
+        with:
+          use_oidc: true
+          fail_ci_if_error: true
+          files: ./demo/calculator/junit.xml
+          flags: ${{ matrix.os }}
+          verbose: true
       - name: Upload test results to Codecov (demo)
         uses: ./
         with:

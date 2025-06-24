@@ -9,6 +9,17 @@ const PLATFORMS = [
   'alpine-arm64',
 ];
 
+const isTrue = (variable) => {
+  const lowercase = variable.toLowerCase();
+  return (
+    lowercase === '1' ||
+    lowercase === 't' ||
+    lowercase === 'true' ||
+    lowercase === 'y' ||
+    lowercase === 'yes'
+  );
+};
+
 const setFailure = (message: string, failCi: boolean): void => {
   failCi ? core.setFailed(message) : core.warning(message);
   if (failCi) {
@@ -38,7 +49,15 @@ const getPlatform = (os?: string): string => {
     return os;
   }
 
-  const platform = process.env.RUNNER_OS?.toLowerCase();
+  let platform = process.env.RUNNER_OS?.toLowerCase();
+
+  // handle arm64
+  const arch = process.env.RUNNER_ARCH?.toLowerCase();
+  // macos version is universal, so we don't need to add -arm64
+  if (arch === 'arm64' && platform !== 'macos') {
+    platform += '-arm64';
+  }
+
   if (isValidPlatform(platform)) {
     core.info(`==> ${platform} OS detected`);
     return platform;
@@ -66,6 +85,7 @@ const getCommand = (
 
 export {
   PLATFORMS,
+  isTrue,
   getBaseUrl,
   getPlatform,
   getUploaderName,
