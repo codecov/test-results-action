@@ -1,3 +1,8 @@
+## ⚠️ Deprecation Warning ⚠️
+
+This Action causes issues for users uploading test analytics to Codecov and will be deprecated in favor of the [Codecov action](https://github.com/codecov/codecov-action).
+To migrate to using this action, replace `codecov/test-results-action@v?` in your CI pipeline with `codecov/codecov-action@v5` and add `report-type: test_results` as a parameter.
+
 ## Usage
 
 Currently, the Action will identify linux, macos, and windows runners. However, the Action may misidentify other architectures. The OS can be specified as

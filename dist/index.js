@@ -32567,6 +32567,9 @@ const downloadAndInvokeCLI = (failCi, verbose) => {
 };
 try {
     const failCi = isTrue(core.getInput('fail_ci_if_error'));
+    core.warning(`This action is being deprecated in favor of 'codecov-action'.
+      Please update CI accordingly to use 'codecov-action@v5' with
+      'report-type: test_results'.`);
     const binaryPath = core.getInput('binary');
     const verbose = isTrue(core.getInput('verbose'));
     if (binaryPath) {
